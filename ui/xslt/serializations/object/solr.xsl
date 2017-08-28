@@ -3,16 +3,16 @@
 	Modified: April 2012
 	Function: This stylesheet reads the incoming object model (nuds or nudsHoard)
 -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:nuds="http://nomisma.org/nuds" xmlns:nh="http://nomisma.org/nudsHoard" xmlns:nm="http://nomisma.org/id/" xmlns:mets="http://www.loc.gov/METS/"
-	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:res="http://www.w3.org/2005/sparql-results#" 
-	exclude-result-prefixes="#all" version="2.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:nuds="http://nomisma.org/nuds" xmlns:nh="http://nomisma.org/nudsHoard" xmlns:nm="http://nomisma.org/id/"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mets="http://www.loc.gov/METS/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink"
+	xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:nmo="http://nomisma.org/ontology#" exclude-result-prefixes="#all" version="2.0">
 	<xsl:output method="xml" encoding="UTF-8"/>
 	<xsl:include href="../../functions.xsl"/>
 	<xsl:include href="../nuds/solr.xsl"/>
 	<xsl:include href="../nudsHoard/solr.xsl"/>
 	<xsl:include href="solr-templates.xsl"/>
 
-	<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/servlet-path, 'numishare/'), '/')"/>
+	<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
 	<xsl:variable name="request-uri" select="concat('http://localhost:8080/orbeon/numishare/', $collection-name)"/>
 
 	<!-- config variables -->
@@ -21,6 +21,7 @@
 	<xsl:variable name="geonames_api_key" select="/content/config/geonames_api_key"/>
 	<xsl:variable name="sparql_endpoint" select="/content/config/sparql_endpoint"/>
 	<xsl:variable name="publisher" select="/content/config/template/agencyName"/>
+	<xsl:variable name="regionHierarchy" select="boolean(/content/config/facets/facet[text()='region_hier'])" as="xs:boolean"/>
 
 	<xsl:variable name="nudsGroup" as="element()*">
 		<nudsGroup>
@@ -73,10 +74,11 @@
 
 	<!-- get non-coin-type RDF in the document -->
 	<xsl:variable name="rdf" as="element()*">
-		<rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:nm="http://nomisma.org/id/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-			xmlns:rdfa="http://www.w3.org/ns/rdfa#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#">
-			<xsl:variable name="count"
-				select="count(distinct-values(descendant::*[not(local-name()='typeDesc') and not(local-name()='reference')][contains(@xlink:href, 'nomisma.org')]/@xlink:href | $nudsGroup/descendant::*[not(local-name()='typeDesc')][contains(@xlink:href, 'nomisma.org')]/@xlink:href))"/>
+		<rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:nm="http://nomisma.org/id/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+			xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:org="http://www.w3.org/ns/org#"
+			xmlns:nomisma="http://nomisma.org/" xmlns:nmo="http://nomisma.org/ontology#">
+			<xsl:variable name="count" select="count(distinct-values(descendant::*[not(local-name()='typeDesc') and not(local-name()='reference')][contains(@xlink:href, 'nomisma.org')]/@xlink:href |
+				$nudsGroup/descendant::*[not(local-name()='typeDesc')][contains(@xlink:href, 'nomisma.org')]/@xlink:href))"/>
 
 			<xsl:call-template name="get-ids">
 				<xsl:with-param name="start">1</xsl:with-param>
@@ -104,8 +106,10 @@
 	<!-- accumulate unique geonames IDs -->
 	<xsl:variable name="geonames" as="element()*">
 		<places>
-			<xsl:for-each
-				select="distinct-values(descendant::*[local-name()='geogname'][contains(@xlink:href, 'geonames.org')]/@xlink:href|$rdf/descendant::*[contains(@rdf:resource, 'geonames.org')]/@rdf:resource|descendant::*[local-name()='subject'][contains(@xlink:href, 'geonames.org')]/@xlink:href)">
+			<xsl:for-each select="distinct-values(descendant::*[local-name()='geogname'][contains(@xlink:href,
+				'geonames.org')]/@xlink:href|$nudsGroup/descendant::*[local-name()='geogname'][contains(@xlink:href, 'geonames.org')]/@xlink:href|$rdf/descendant::*[contains(@rdf:resource,
+				'geonames.org')]/@rdf:resource|descendant::*[local-name()='subject'][contains(@xlink:href,
+				'geonames.org')]/@xlink:href|$sparqlResult/descendant::res:binding[@name='findspot'][contains(res:uri, 'geonames.org')]/res:uri)">
 				<xsl:variable name="geonameId" select="tokenize(., '/')[4]"/>
 
 				<xsl:if test="number($geonameId)">
@@ -114,7 +118,11 @@
 							<xsl:copy-of select="document(concat($geonames-url, '/get?geonameId=', $geonameId, '&amp;username=', $geonames_api_key, '&amp;style=full'))"/>
 						</results>
 					</xsl:variable>
-					<xsl:variable name="coordinates" select="concat($geonames_data//lng, ',', $geonames_data//lat)"/>
+					<xsl:variable name="coordinates">
+						<xsl:if test="$geonames_data//lng castable as xs:decimal and $geonames_data//lat castable as xs:decimal">
+							<xsl:value-of select="concat($geonames_data//lng, ',', $geonames_data//lat)"/>
+						</xsl:if>
+					</xsl:variable>
 
 					<!-- generate AACR2 label -->
 					<xsl:variable name="label">
@@ -124,24 +132,26 @@
 						<xsl:variable name="adminName1" select="$geonames_data//adminName1"/>
 						<xsl:variable name="fcode" select="$geonames_data//fcode"/>
 						<!-- set a value equivalent to AACR2 standard for US, AU, CA, and GB.  This equation deviates from AACR2 for Malaysia since standard abbreviations for territories cannot be found -->
-						<xsl:value-of
-							select="if ($countryCode = 'US' or $countryCode = 'AU' or $countryCode = 'CA') then if ($fcode = 'ADM1') then $name else concat($name, ' (', $abbreviations//country[@code=$countryCode]/place[. = $adminName1]/@abbr, ')') else if ($countryCode= 'GB') then  if ($fcode = 'ADM1') then $name else concat($name, ' (', $adminName1, ')') else if ($fcode = 'PCLI') then $name else concat($name, ' (', $countryName, ')')"
-						/>
+						<xsl:value-of select="if ($countryCode = 'US' or $countryCode = 'AU' or $countryCode = 'CA') then if ($fcode = 'ADM1') then $name else concat($name, ' (',
+							$abbreviations//country[@code=$countryCode]/place[. = $adminName1]/@abbr, ')') else if ($countryCode= 'GB') then  if ($fcode = 'ADM1') then $name else concat($name, ' (',
+							$adminName1, ')') else if ($fcode = 'PCLI') then $name else concat($name, ' (', $countryName, ')')"/>
 					</xsl:variable>
 
 
+					<xsl:variable name="geonames_hier" as="element()*">
+						<results>
+							<xsl:copy-of select="document(concat($geonames-url, '/hierarchy?geonameId=', $geonameId, '&amp;username=', $geonames_api_key))"/>
+						</results>
+					</xsl:variable>
+
 					<!-- create facetRegion hierarchy -->
 					<xsl:variable name="hierarchy">
-						<xsl:value-of select="$geonames_data//countryName"/>
-						<xsl:for-each select="$geonames_data//*[starts-with(local-name(), 'adminName')]">
-							<xsl:sort select="local-name()"/>
-							<xsl:if test="string-length(.) &gt; 0">
+						<xsl:for-each select="$geonames_hier//geoname[position() &gt;= 3]">
+							<xsl:value-of select="concat(geonameId, '/', name)"/>
+							<xsl:if test="not(position()=last())">
 								<xsl:text>|</xsl:text>
-								<xsl:value-of select="."/>
 							</xsl:if>
 						</xsl:for-each>
-						<xsl:text>|</xsl:text>
-						<xsl:value-of select="$geonames_data//name"/>
 					</xsl:variable>
 
 					<place id="{.}" label="{$label}" hierarchy="{$hierarchy}">
@@ -150,6 +160,17 @@
 				</xsl:if>
 			</xsl:for-each>
 		</places>
+	</xsl:variable>
+	
+	<xsl:variable name="regions" as="element()*">
+		<node>
+			<xsl:if test="$regionHierarchy = true()">
+				<xsl:variable name="mints" select="distinct-values($rdf//nmo:Mint/@rdf:about[contains(., 'nomisma.org')]|$rdf//nmo:Region/@rdf:about[contains(., 'nomisma.org')])"/>
+				<xsl:variable name="identifiers" select="replace(string-join($mints, '|'), 'http://nomisma.org/id/', '')"></xsl:variable>
+				
+				<xsl:copy-of select="document(concat('http://nomisma.org/apis/regionHierarchy?identifiers=', encode-for-uri($identifiers)))"/>
+			</xsl:if>
+		</node>
 	</xsl:variable>
 
 	<xsl:variable name="abbreviations" as="element()*">
@@ -248,8 +269,8 @@
 		<xsl:param name="count"/>
 
 		<xsl:variable name="id-param">
-			<xsl:for-each
-				select="distinct-values(descendant::*[not(local-name()='typeDesc') and not(local-name()='reference')][contains(@xlink:href, 'nomisma.org')]/@xlink:href | $nudsGroup/descendant::*[not(local-name()='typeDesc') and not(local-name()='object')][contains(@xlink:href, 'nomisma.org')]/@xlink:href)">
+			<xsl:for-each select="distinct-values(descendant::*[not(local-name()='typeDesc') and not(local-name()='reference')][contains(@xlink:href, 'nomisma.org')]/@xlink:href |
+				$nudsGroup/descendant::*[not(local-name()='typeDesc') and not(local-name()='object')][contains(@xlink:href, 'nomisma.org')]/@xlink:href)">
 				<xsl:if test="position() &gt;= $start and position() &lt;= $end">
 					<xsl:value-of select="substring-after(., 'id/')"/>
 					<xsl:if test="not(position()=$count)">

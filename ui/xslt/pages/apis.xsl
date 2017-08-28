@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" exclude-result-prefixes="#all" version="2.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare" exclude-result-prefixes="#all" version="2.0">
 	<xsl:include href="../templates.xsl"/>
 	<xsl:include href="../functions.xsl"/>
 
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
 
 	<xsl:variable name="display_path"/>
 	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
@@ -19,8 +29,8 @@
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
 				<xsl:if test="string(/content/config/google_analytics)">
@@ -64,6 +74,16 @@
 									<td/>
 									<td/>
 								</tr>
+								<tr>
+									<td>
+										<a href="#getRDF">getRDF</a>
+									</td>
+									<td>
+										<a href="apis/getRDF?identifiers={string-join(//doc/str[@name='recordId'], '|')}">RDF/XML</a>
+									</td>
+									<td/>
+									<td/>
+								</tr>
 							</tbody>
 						</table>
 						<div class="highlight" id="getNuds">
@@ -75,6 +95,17 @@
 								<b>Result</b> : returns NUDS/XML records aggregated in a nudsGroup root element.<br/>
 								<b>Example</b>: <a href="apis/getNuds?identifiers={string-join(//doc/str[@name='recordId'], '|')}">apis/getNuds?identifiers=<xsl:value-of
 										select="string-join(//doc/str[@name='recordId'], '|')"/></a>
+							</p>
+						</div>
+						<div class="highlight" id="getRDF">
+							<h3>Get RDF</h3>
+							<p>Get an aggregated RDF/XML serialization based on the recordIds in the collection.<br/>
+								<b>Webservice Type</b> : REST<br/>
+								<b>Url</b>: <xsl:value-of select="concat(/content/config/url, 'apis/getRDF?')"/><br/>
+								<b>Parameters</b> : identifiers (recordIds divided by a pipe '|')<br/>
+								<b>Result</b> : returns RDF/XML triples for given objects/hoards/coin types.<br/>
+								<b>Example</b>: <a href="apis/getRDF?identifiers={string-join(//doc/str[@name='recordId'], '|')}">apis/getRDF?identifiers=<xsl:value-of
+									select="string-join(//doc/str[@name='recordId'], '|')"/></a>
 							</p>
 						</div>
 					</div>
@@ -143,10 +174,19 @@
 									<tr>
 										<td>JSON-LD</td>
 										<td>
-											<xsl:value-of select="concat(/content/config/url, 'id/{$id}.json')"/>
+											<xsl:value-of select="concat(/content/config/url, 'id/{$id}.jsonld')"/>
 										</td>
 										<td>
-											<code>application/json</code>
+											<code>application/ld+json</code>
+										</td>
+									</tr>
+									<tr>
+										<td>geoJSON</td>
+										<td>
+											<xsl:value-of select="concat(/content/config/url, 'id/{$id}.geojson')"/>
+										</td>
+										<td>
+											<code>application/vnd.geo+json</code>
 										</td>
 									</tr>
 								</tbody>
@@ -157,7 +197,7 @@
 							<h3>Search Results</h3>
 							<p>Search results (the browse page) are returned in HTML5, but Numishare supports Atom and RSS via REST, as well as Atom and raw Solr XML via content negotiation of the
 								browse page URL, <a href="{concat(/content/config/url, 'results')}"><xsl:value-of select="concat(/content/config/url, 'results')"/></a>. The REST-based Atom feed sorts
-								by the Lucene syntax 'timestamp desc' by default, but the sort parameter may be provided manually to alter the default field and order.</p>
+								by the Lucene syntax 'timestamp desc' by default, but the sort parameter may be provided manually to alter the default field and order.</p>							
 							<table class="table">
 								<thead>
 									<tr>
@@ -208,6 +248,60 @@
 									</tr>
 								</tbody>
 							</table>
+							
+							<h4>Geographic Responses</h4>
+							<p>Search results may also be serialized into geographic models when relevant, for example to show the mints, findspots, or subjects related to the current query. Results are made available in KML and geoJSON.</p>
+							<table class="table">
+								<thead>
+									<tr>
+										<th>Response Type</th>
+										<th>geoJSON</th>
+										<th>KML</th>										
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>Mints</td>
+										<td>
+											<a href="{concat(/content/config/url, 'mints.geojson')}">
+												<xsl:value-of select="concat(/content/config/url, 'mints.geojson')"/>
+											</a>
+										</td>
+										<td>
+											<a href="{concat(/content/config/url, 'mints.kml')}">
+												<xsl:value-of select="concat(/content/config/url, 'mints.kml')"/>
+											</a>
+										</td>
+									</tr>
+									<tr>
+										<td>Findspots</td>
+										<td>
+											<a href="{concat(/content/config/url, 'findspots.geojson')}">
+												<xsl:value-of select="concat(/content/config/url, 'findspots.geojson')"/>
+											</a>
+										</td>
+										<td>
+											<a href="{concat(/content/config/url, 'findspots.kml')}">
+												<xsl:value-of select="concat(/content/config/url, 'findspots.kml')"/>
+											</a>
+										</td>
+									</tr>
+									<tr>
+										<td>Subjects</td>
+										<td>
+											<a href="{concat(/content/config/url, 'subjects.geojson')}">
+												<xsl:value-of select="concat(/content/config/url, 'subjects.geojson')"/>
+											</a>
+										</td>
+										<td>
+											<a href="{concat(/content/config/url, 'subjects.kml')}">
+												<xsl:value-of select="concat(/content/config/url, 'subjects.kml')"/>
+											</a>
+										</td>
+									</tr>									
+								</tbody>
+							</table>
+							
 						</div>
 						<div>
 							<h3>Nomisma RDF Dump</h3>

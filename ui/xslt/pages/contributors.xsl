@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare" xmlns:foaf="http://xmlns.com/foaf/0.1/"
-	xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" exclude-result-prefixes="#all"
-	version="2.0">
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	exclude-result-prefixes="#all" version="2.0">
 	<xsl:include href="../templates.xsl"/>
 	<xsl:include href="../functions.xsl"/>
 
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name = 'lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[. = 'accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[. = 'accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
 
 	<xsl:variable name="display_path"/>
 	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
@@ -22,8 +32,8 @@
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
 				<xsl:if test="string(/content/config/google_analytics)">
@@ -50,14 +60,33 @@
 					<table class="table table-striped">
 						<thead>
 							<tr>
-								<th/>
-								<th>Count</th>
-								<th>Collection</th>
+								<xsl:if test="descendant::res:binding[@name = 'thumbnail']">
+									<th style="width:200px"/>
+								</xsl:if>
+								<th>
+									<xsl:value-of select="numishare:normalizeLabel('numeric_count', $lang)"/>
+								</th>
+								<th>
+									<xsl:value-of select="numishare:regularize_node('collection', $lang)"/>
+								</th>
 							</tr>
 						</thead>
 						<tbody>
-							<xsl:apply-templates select="descendant::res:result[res:binding[@name='collection']/res:uri]" mode="contributors"/>
-						</tbody>						
+							<xsl:apply-templates select="descendant::res:result" mode="contributors"/>
+						</tbody>
+						<tfoot>
+							<tr>
+								<td>
+									<h2>Total</h2>
+								</td>
+								<td>
+									<h2>
+										<xsl:value-of select="format-number(sum(descendant::res:binding[@name = 'count']/res:literal), '###,###')"/>
+									</h2>
+								</td>
+								<td/>
+							</tr>
+						</tfoot>
 					</table>
 				</div>
 			</div>
@@ -65,52 +94,113 @@
 	</xsl:template>
 
 	<xsl:template match="res:result" mode="contributors">
-		<xsl:variable name="rdf" as="element()*">
-			<xsl:copy-of select="document(concat(res:binding[@name='collection']/res:uri, '.rdf'))/*"/>
-		</xsl:variable>
-
 		<tr>
 			<td>
-				<xsl:if test="string($rdf//foaf:thumbnail/@rdf:resource)">
-					<a href="{if (string($rdf//foaf:homepage/@rdf:resource)) then $rdf//foaf:homepage/@rdf:resource else res:binding[@name='collection']/res:uri}">
-						<img src="{$rdf//foaf:thumbnail/@rdf:resource}" alt="logo"/>
+				<xsl:if test="string(res:binding[@name = 'thumbnail']/res:uri)">
+					<xsl:variable name="link">
+						<xsl:choose>
+							<xsl:when test="res:binding[@name = 'memberOf']">
+								<xsl:value-of select="res:binding[@name = 'memberOf']/res:uri"/>
+							</xsl:when>
+							<xsl:when test="res:binding[@name = 'homepage']">
+								<xsl:value-of select="res:binding[@name = 'homepage']/res:uri"/>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:value-of select="res:binding[@name = 'dataset']/res:uri"/>
+							</xsl:otherwise>
+						</xsl:choose>
+					</xsl:variable>
+
+					<a href="{$link}">
+						<img src="{res:binding[@name='thumbnail']/res:uri}" alt="logo" style="max-width:200px"/>
 					</a>
 				</xsl:if>
 			</td>
 			<td>
 				<h2>
-					<xsl:value-of select="res:binding[@name='count']/res:literal"/>
+					<xsl:value-of select="format-number(res:binding[@name = 'count']/res:literal, '###,###')"/>
 				</h2>
 			</td>
 			<td>
 				<h2>
-					<a href="{if (string($rdf//foaf:homepage/@rdf:resource)) then $rdf//foaf:homepage/@rdf:resource else res:binding[@name='collection']/res:uri}">
-						<xsl:choose>
-							<xsl:when test="$rdf//skos:prefLabel[@xml:lang=$lang]">
-								<xsl:value-of select="$rdf//skos:prefLabel[@xml:lang=$lang]"/>
-							</xsl:when>
-							<xsl:otherwise>
-								<xsl:value-of select="$rdf//skos:prefLabel[@xml:lang='en']"/>
-							</xsl:otherwise>
-						</xsl:choose>
-					</a>
+					<xsl:choose>
+						<xsl:when test="res:binding[@name = 'collection']">
+							<a
+								href="{if (string(res:binding[@name='homepage']/res:uri)) then res:binding[@name='homepage']/res:uri else res:binding[@name='dataset']/res:uri}">
+								<xsl:value-of select="res:binding[@name = 'collectionLabel']/res:literal"/>
+							</a>
+						</xsl:when>
+						<xsl:otherwise>
+							<a href="{res:binding[@name='dataset']/res:uri}">
+								<xsl:value-of select="res:binding[@name = 'title']/res:literal"/>
+							</a>
+						</xsl:otherwise>
+					</xsl:choose>
+
 				</h2>
-				<dl class="dl-horizontal">
-					<dt>Nomisma URI</dt>
+				<dl class=" {if($lang='ar') then 'dl-horizontal ar' else 'dl-horizontal'}">
+					<xsl:if test="res:binding[@name = 'collection']">
+						<dt>Nomisma URI</dt>
+						<dd>
+							<a href="{res:binding[@name='collection']/res:uri}">
+								<xsl:value-of select="res:binding[@name = 'collection']/res:uri"/>
+							</a>
+						</dd>
+					</xsl:if>
+					<xsl:if test="res:binding[@name = 'publisher']">
+						<dt>
+							<xsl:value-of select="numishare:regularize_node('publisher', $lang)"/>
+						</dt>
+						<dd>
+							<xsl:value-of select="res:binding[@name = 'publisher']/res:literal"/>
+						</dd>
+					</xsl:if>
+					<dt>
+						<xsl:value-of select="numishare:regularize_node('description', $lang)"/>
+					</dt>
 					<dd>
-						<a href="{res:binding[@name='collection']/res:uri}">
-							<xsl:value-of select="res:binding[@name='collection']/res:uri"/>
-						</a>
+						<xsl:value-of select="res:binding[@name = 'description']/res:literal"/>
 					</dd>
-					<dt>Definition</dt>
+					<dt>
+						<xsl:value-of select="numishare:regularize_node('license', $lang)"/>
+					</dt>
 					<dd>
+						<!-- display license first if available, otherwise rights -->
 						<xsl:choose>
-							<xsl:when test="$rdf//skos:prefLabel[@xml:lang=$lang]">
-								<xsl:value-of select="$rdf//skos:definition[@xml:lang=$lang]"/>
+							<xsl:when test="res:binding[@name='license']">
+								<a href="{res:binding[@name='license']/res:uri}">
+									<xsl:variable name="license" select="res:binding[@name='license']/res:uri"/>
+									<xsl:choose>
+										<xsl:when test="contains($license, 'http://opendatacommons.org/licenses/odbl/')">ODC-ODbL</xsl:when>
+										<xsl:when test="contains($license, 'http://opendatacommons.org/licenses/by/')">ODC-by</xsl:when>
+										<xsl:when test="contains($license, 'http://opendatacommons.org/licenses/pddl/')">ODC-PDDL</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by/')">
+											<img src="http://i.creativecommons.org/l/by/3.0/88x31.png" alt="CC BY" title="CC BY"/>
+										</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by-nd/')">
+											<img src="http://i.creativecommons.org/l/by-nd/3.0/88x31.png" alt="CC BY-ND" title="CC BY-ND"/>
+										</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by-nc-sa/')">
+											<img src="http://i.creativecommons.org/l/by-nc-sa/3.0/88x31.png" alt="CC BY-NC-SA" title="CC BY-NC-SA"/>
+										</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by-sa/')">
+											<img src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" alt="CC BY-SA" title="CC BY-SA"/>
+										</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by-nc/')">
+											<img src="http://i.creativecommons.org/l/by-nc/3.0/88x31.png" alt="CC BY-NC" title="CC BY-NC"/>
+										</xsl:when>
+										<xsl:when test="contains($license, 'http://creativecommons.org/licenses/by-nc-nd/')">
+											<img src="http://i.creativecommons.org/l/by-nc-nd/3.0/88x31.png" alt="CC BY-NC-ND" title="CC BY-NC-ND"/>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:value-of select="res:binding[@name='license']/res:uri"/>
+										</xsl:otherwise>
+									</xsl:choose>
+								</a>
 							</xsl:when>
-							<xsl:otherwise>
-								<xsl:value-of select="$rdf//skos:definition[@xml:lang='en']"/>
-							</xsl:otherwise>
+							<xsl:when test="res:binding[@name='rights']">
+								<xsl:value-of select="res:binding[@name='rights']/res:literal"/>
+							</xsl:when>
 						</xsl:choose>
 					</dd>
 				</dl>

@@ -188,34 +188,39 @@
 		<h3>
 			<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
 		</h3>
+		
+		
 		<ul>
 			<xsl:apply-templates mode="descMeta"/>
 			<xsl:if test="$hasContents = 'true'">
+				<!-- display the closing date, handling only those types which are approved certainty codes -->
 				<xsl:if test="not(nh:deposit/nh:date) and not(nh:deposit/nh:dateRange)">
 					<xsl:variable name="all-dates" as="element()*">
 						<dates>
 							<xsl:for-each select="parent::node()/nh:contentsDesc/nh:contents/descendant::nuds:typeDesc">
-								<xsl:choose>
-									<xsl:when test="string(@xlink:href)">
-										<xsl:variable name="href" select="@xlink:href"/>
-										<xsl:for-each select="$nudsGroup//object[@xlink:href=$href]/descendant::*/@standardDate">
-											<xsl:if test="number(.)">
-												<date>
-													<xsl:value-of select="number(.)"/>
-												</date>
-											</xsl:if>
-										</xsl:for-each>
-									</xsl:when>
-									<xsl:otherwise>
-										<xsl:for-each select="descendant::*/@standardDate">
-											<xsl:if test="number(.)">
-												<date>
-													<xsl:value-of select="number(.)"/>
-												</date>
-											</xsl:if>
-										</xsl:for-each>
-									</xsl:otherwise>
-								</xsl:choose>
+								<xsl:if test="index-of(//config/certainty_codes/code[@accept='true'], @certainty)">
+									<xsl:choose>
+										<xsl:when test="string(@xlink:href)">
+											<xsl:variable name="href" select="@xlink:href"/>
+											<xsl:for-each select="$nudsGroup//object[@xlink:href=$href]/descendant::*/@standardDate">
+												<xsl:if test="number(.)">
+													<date>
+														<xsl:value-of select="number(.)"/>
+													</date>
+												</xsl:if>
+											</xsl:for-each>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:for-each select="descendant::*/@standardDate">
+												<xsl:if test="number(.)">
+													<date>
+														<xsl:value-of select="number(.)"/>
+													</date>
+												</xsl:if>
+											</xsl:for-each>
+										</xsl:otherwise>
+									</xsl:choose>
+								</xsl:if>								
 							</xsl:for-each>
 						</dates>
 					</xsl:variable>
@@ -231,18 +236,13 @@
 					</xsl:variable>
 					<li>
 						<b><xsl:value-of select="numishare:regularize_node('closing_date', $lang)"/>: </b>
-						<span property="nm:closing_date" content="{format-number($dates//date[last()], '0000')}" datatype="xsd:gYear">
-							<xsl:choose>
-								<xsl:when test="$dates//date[last()] &lt; 1">
-									<xsl:value-of select="nh:normalize_date($dates//date[last()]-1, $dates//date[last()]-1)"/>
-								</xsl:when>
-								<xsl:otherwise>
-									<xsl:value-of select="nh:normalize_date($dates//date[last()], $dates//date[last()])"/>
-								</xsl:otherwise>
-							</xsl:choose>
+						<span property="nmo:hasClosing_date" content="{format-number($dates//date[last()], '0000')}" datatype="xsd:gYear">
+							<xsl:value-of select="nh:normalize_date($dates//date[last()], $dates//date[last()])"/>
 						</span>
 					</li>
 				</xsl:if>
+				
+				<!-- display total counts of distint denominations -->
 				<xsl:variable name="total-counts" as="element()*">
 					<total-counts>
 						<xsl:for-each select="parent::node()/nh:contentsDesc/nh:contents/descendant::nuds:typeDesc">
@@ -294,6 +294,7 @@
 						</span>
 					</li>
 				</xsl:if>
+				<span style="display:none" property="dcterms:tableOfContents" rel="{concat($url, 'id/', $id, '#contents')}"/>
 			</xsl:if>
 		</ul>
 	</xsl:template>
@@ -301,7 +302,7 @@
 		<h3>
 			<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
 		</h3>
-		<table class="table table-striped">
+		<table class="table table-striped" typeof="dcmitype:Collection" about="{concat($url, 'id/', $id, '#contents')}" id="contents">
 			<thead>
 				<tr>
 					<th style="width:10%;text-align:center">Count</th>
@@ -309,8 +310,8 @@
 					<th style="width:10%;text-align:center"/>
 				</tr>
 			</thead>
-			<tbody>
-				<xsl:apply-templates select="descendant::nh:coin|descendant::nh:coinGrp"/>
+			<tbody>				
+				<xsl:apply-templates select="descendant::nh:coin|descendant::nh:coinGrp"/>				
 			</tbody>
 		</table>
 	</xsl:template>
@@ -332,16 +333,47 @@
 			</xsl:choose>
 		</xsl:variable>
 		<tr>
-			<td style="width:10%;text-align:center">
+			<td class="text-center">
 				<xsl:value-of select="if(@count) then @count else 1"/>
 			</td>
-			<td>
+			<td>				
 				<xsl:if test="string($typeDesc_resource)">
-					<h3>
-						<a rel="nm:type_series_item" href="{$typeDesc_resource}" target="_blank">
-							<xsl:value-of select="$nudsGroup//object[@xlink:href = $typeDesc_resource]/nuds:nuds/nuds:descMeta/nuds:title"/>
-						</a>
-					</h3>
+					<!-- display labels for certainty codes -->
+					<xsl:variable name="code" select="nuds:typeDesc/@certainty"/>
+					<xsl:variable name="codeNode" as="element()*">
+						<xsl:copy-of select="//config/certainty_codes/code[. = $code]"/>
+					</xsl:variable>
+					
+					<xsl:choose>
+						<xsl:when test="string($code) and string($codeNode)">
+							
+							<xsl:choose>
+								<xsl:when test="$codeNode/@position='before'">
+									<h3>
+										<xsl:value-of select="$codeNode/@label"/>
+										<a rel="nmo:hasTypeSeriesItem" href="{$typeDesc_resource}" target="_blank">
+											<xsl:value-of select="$nudsGroup//object[@xlink:href = $typeDesc_resource]/nuds:nuds/nuds:descMeta/nuds:title"/>
+										</a>
+									</h3>									
+								</xsl:when>
+								<xsl:when test="$codeNode/@position='after'">
+									<h3>										
+										<a rel="nmo:hasTypeSeriesItem" href="{$typeDesc_resource}" target="_blank">
+											<xsl:value-of select="$nudsGroup//object[@xlink:href = $typeDesc_resource]/nuds:nuds/nuds:descMeta/nuds:title"/>
+										</a>
+										<xsl:value-of select="$codeNode/@label"/>
+									</h3>
+								</xsl:when>
+							</xsl:choose>
+						</xsl:when>
+						<xsl:otherwise>
+							<h3>
+								<a rel="nmo:hasTypeSeriesItem" href="{$typeDesc_resource}" target="_blank">
+									<xsl:value-of select="$nudsGroup//object[@xlink:href = $typeDesc_resource]/nuds:nuds/nuds:descMeta/nuds:title"/>
+								</a>
+							</h3>
+						</xsl:otherwise>
+					</xsl:choose>
 				</xsl:if>
 				<xsl:choose>
 					<xsl:when test="$typeDesc/nuds:denomination">

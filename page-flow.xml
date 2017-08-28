@@ -4,22 +4,26 @@
 	* ADMIN INTERFACE *
 	***************** -->	
 	<page path="/numishare/admin/" view="xforms/admin.xhtml" id="admin"/>	
+	<page path="/numishare/admin/symbols/" view="xforms/symbols.xhtml"/>
 	<page path="/numishare/admin/edit/coin/" view="xforms/nuds.xhtml"/>
-	<page path="/numishare/admin/edit/object/" view="xforms/vra.xhtml"/>	
-	<page path="/numishare/admin/edit/settings/" view="xforms/edit-config.xhtml"/>
+	<page path="/numishare/admin/edit/symbol/" view="xforms/edit-symbol.xhtml"/>
+	<!--<page path="/numishare/admin/edit/object/" view="xforms/vra.xhtml"/>-->	
+	<page path="/numishare/admin/edit/settings/" view="xforms/settings.xhtml"/>
 	<page path="/numishare/admin/edit/page/" view="xforms/page.xhtml"/>	
 	<page path="/numishare/admin/pages/" view="xforms/pages.xhtml"/>
-	<page path="/numishare/admin/imports/new/" view="xforms/import-csv.xhtml"/>
-	<page path="/numishare/admin/imports/" view="xforms/manage-imports.xhtml"/>
-	<page path="/numishare/admin/theme/" view="xforms/theme.xhtml"/>
+	<!--<page path="/numishare/admin/imports/new/" view="xforms/import-csv.xhtml"/>
+	<page path="/numishare/admin/imports/" view="xforms/manage-imports.xhtml"/>-->	
 	<page path="/numishare/admin/templates/" view="xforms/templates.xhtml"/>	
 	<page path="/numishare/admin/theme/layout/" view="xforms/layout.xhtml"/>	
+	
+	<!-- authentication -->
+	<page path="/numishare/login" view="xforms/login.html" id="login"/>
+	<page path="/numishare/login-failed" view="xforms/login-failed.html"/>
 	<page path="/numishare/admin/logout">
-		<action action="xpl/logout.xpl">
-			<result page="index"/>
+		<action action="xpl/xforms/logout.xpl">
+			<result page="admin"/>
 		</action>
 	</page>
-	
 	<!-- ****************
 	* PUBLIC INTERFACE *
 	***************** -->
@@ -29,26 +33,91 @@
 		Model paths are unlikely to require changing. Other ajax pages may need to be copied if alterations in format are required.
 	*** -->
 	
-	<!-- OCRE -->
-	<page path="/numishare/ocre/" model="xpl/models/config.xpl" view="file:///usr/local/projects/ocre/xpl/views/pages/index.xpl"/>
-	
+	<!-- ************** PROJECT NUMISHARE PAGES *************-->	
 	<!-- AoD -->
 	<page path="/numishare/aod/" model="xpl/models/config.xpl" view="file:///usr/local/projects/aod/xpl/views/pages/index.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.xml" view="xpl/models/object/get-id.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.rdf" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/rdf.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.jsonld" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/json-ld.xpl"/>	
+	<page path="/numishare/aod/id/(.*)\.kml" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/kml.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.geojson" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/geojson.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.ttl" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/ttl.xpl"/>
+	<page path="/numishare/aod/id/(.*)\.solr" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/solr.xpl"/>	
+	<page path="/numishare/aod/id/(.*)" model="xpl/models/object/get-id.xpl" view="file:///usr/local/projects/aod/xpl/controllers/conneg-id.xpl"/>
+	<page path="/numishare/aod/map/(.*)" model="xpl/models/object/get-id.xpl" view="file:///usr/local/projects/aod/xpl/views/serializations/object/html-map.xpl"/>
 	
+	<!-- CHRR -->
+	<page path="/numishare/chrr/" model="xpl/models/config.xpl" view="file:///usr/local/projects/chrr/xpl/views/pages/index.xpl"/>
+
+	<!-- RRC -->
+	<page path="/numishare/crro/" model="xpl/models/config.xpl" view="file:///usr/local/projects/crro/xpl/views/pages/index.xpl"/>
+	
+	<!-- EGYPT -->
+	<page path="/numishare/egypt/" model="xpl/models/config.xpl" view="file:///usr/local/projects/egypt/xpl/views/pages/index.xpl"/>
+	
+	<!-- PELLA -->
+	<page path="/numishare/pella/" model="xpl/models/config.xpl" view="file:///usr/local/projects/pella/xpl/views/pages/index.xpl"/>
+	
+	<!-- OCRE -->
+	<page path="/numishare/ocre/" model="xpl/models/config.xpl" view="file:///usr/local/projects/ocre/xpl/views/pages/index.xpl"/>	
+	
+	<!-- MANTIS -->
+	<!-- pages -->
+	<page path="/numishare/mantis/apis" model="xpl/models/solr/apis.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/apis.xpl"/>
+	<page path="/numishare/mantis/compare" model="xpl/models/solr/search.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/compare.xpl"/>
+	<page path="/numishare/mantis/department/[^\/]+" model="file:///usr/local/projects/mantis/xpl/models/solr/department.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/department.xpl"/>
+	<page path="/numishare/mantis/maps" model="file:///usr/local/projects/mantis/xpl/models/solr/maps.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/maps.xpl"/>
+	<page path="/numishare/mantis/maps/fullscreen" model="file:///usr/local/projects/mantis/xpl/models/solr/maps.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/maps_fullscreen.xpl"/>
+	<page path="/numishare/mantis/search" model="xpl/models/solr/search.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/search.xpl"/>
+	<page path="/numishare/mantis/visualize" model="xpl/models/solr/search.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/visualize.xpl"/>
+	<page path="/numishare/mantis/" model="xpl/models/config.xpl" view="file:///usr/local/projects/mantis/xpl/views/pages/index.xpl"/>
+	
+	<!-- serializations -->
+	<!-- Solr -->
+	<page path="/numishare/mantis/results" model="xpl/models/solr/results.xpl" view="file:///usr/local/projects/mantis/xpl/controllers/conneg-results.xpl"/>
+	<page path="/numishare/mantis/feed/" model="xpl/models/solr/feed.xpl" view="file:///usr/local/projects/mantis/xpl/views/serializations/solr/atom.xpl"/>
+	
+	<!-- id -->
+	<page path="/numishare/mantis/id/(.*)\.xml" view="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.rdf" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/rdf.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.jsonld" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/json-ld.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.kml" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/kml.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.ttl" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/ttl.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.solr" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/solr.xpl"/>
+	<page path="/numishare/mantis/id/(.*)\.geojson" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/geojson.xpl"/>
+	<page path="/numishare/mantis/id/(.*)" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="file:///usr/local/projects/mantis/xpl/controllers/conneg-id.xpl"/>
+	<page path="/numishare/mantis/map/(.*)" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="file:///usr/local/projects/mantis/xpl/views/serializations/object/html-map.xpl"/>
+	
+	<!-- apis -->
+	<page path="/numishare/mantis/apis/get" model="file:///usr/local/projects/mantis/xpl/models/object/get-id.xpl" view="xpl/views/apis/get.xpl"/>	
+	<page path="/numishare/mantis/apis/search" model="xpl/models/solr/feed.xpl" view="file:///usr/local/projects/mantis/xpl/views/apis/search.xpl"/>
+	
+	<!-- results ajax -->
+	<page path="/numishare/mantis/results_ajax" model="xpl/models/solr/results_ajax.xpl" view="file:///usr/local/projects/mantis/xpl/views/ajax/results_ajax.xpl"/>
+	
+	<!-- ************** GENERIC NUMISHARE PAGES *************-->	
 	<!-- **** SERIALIZATIONS **** -->	
 	<!-- Solr -->
-	<page path="/numishare/[^\/]+/results" model="xpl/models/solr/results.xpl" view="xpl/controllers/conneg-results.xpl"/>
+	<page path="/numishare/[^\/]+/results" model="xpl/models/solr/results.xpl"  view="xpl/views/serializations/solr/html.xpl"/>
 	<page path="/numishare/[^\/]+/feed/" model="xpl/models/solr/feed.xpl" view="xpl/views/serializations/solr/atom.xpl"/>
 	
 	<!-- id -->
 	<page path="/numishare/[^\/]+/id/(.*)\.xml" view="xpl/models/object/get-id.xpl"/>
 	<page path="/numishare/[^\/]+/id/(.*)\.rdf" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/rdf.xpl"/>
-	<page path="/numishare/[^\/]+/id/(.*)\.json" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/json-ld.xpl"/>
+	<page path="/numishare/[^\/]+/id/(.*)\.jsonld" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/json-ld.xpl"/>
 	<page path="/numishare/[^\/]+/id/(.*)\.kml" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/kml.xpl"/>
+	<page path="/numishare/[^\/]+/id/(.*)\.geojson" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/geojson.xpl"/>
 	<page path="/numishare/[^\/]+/id/(.*)\.ttl" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/rdf/ttl.xpl"/>
 	<page path="/numishare/[^\/]+/id/(.*)\.solr" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/solr.xpl"/>
 	<page path="/numishare/[^\/]+/id/(.*)" model="xpl/models/object/get-id.xpl" view="xpl/controllers/conneg-id.xpl"/>
 	<page path="/numishare/[^\/]+/map/(.*)" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/object/html-map.xpl"/>
+	
+	<!-- symbols -->	
+	<page path="/numishare/[^\/]+/symbol/(.*)\.rdf" view="xpl/models/symbol/get.xpl"/>
+	<page path="/numishare/[^\/]+/symbol/(.*)\.ttl" model="xpl/models/symbol/get.xpl" view="xpl/views/serializations/rdf/ttl.xpl"/>
+	<page path="/numishare/[^\/]+/symbol/(.*)\.jsonld" model="xpl/models/symbol/get.xpl" view="xpl/views/serializations/rdf/json-ld.xpl"/>
+	<page path="/numishare/[^\/]+/symbol/(.*)" model="xpl/models/symbol/get.xpl" view="xpl/controllers/conneg-symbol.xpl"/>	
+	<page path="/numishare/[^\/]+/symbols/(.*)" model="xpl/models/config.xpl" view="xpl/controllers/render-image.xpl"/>
 	
 	<!-- **** PAGES **** -->	
 	<page path="/numishare/[^\/]+/analyze" model="xpl/models/solr/search.xpl" view="xpl/views/pages/analyze.xpl"/>
@@ -57,31 +126,41 @@
 	<page path="/numishare/[^\/]+/contributors" model="xpl/models/sparql/contributors.xpl" view="xpl/views/pages/contributors.xpl"/>	
 	<page path="/numishare/[^\/]+/maps" model="xpl/models/solr/maps.xpl" view="xpl/views/pages/maps.xpl"/>
 	<page path="/numishare/[^\/]+/maps/fullscreen" model="xpl/models/solr/maps.xpl" view="xpl/views/pages/maps_fullscreen.xpl"/>
+	<page path="/numishare/[^\/]+/identify" model="xpl/models/solr/identify.xpl" view="xpl/views/pages/identify.xpl"/>
 	<page path="/numishare/[^\/]+/pages/(.*)" model="xpl/models/config.xpl" view="xpl/views/pages/pages.xpl"/>
 	<page path="/numishare/[^\/]+/search" model="xpl/models/solr/search.xpl" view="xpl/views/pages/search.xpl"/>
+	<page path="/numishare/[^\/]+/symbols" model="xpl/models/xquery/aggregate-symbols.xpl" view="xpl/views/pages/symbols.xpl"/>
 	<page path="/numishare/[^\/]+/visualize" model="xpl/models/solr/search.xpl" view="xpl/views/pages/visualize.xpl"/>
 	<page path="/numishare/[^\/]+/" model="xpl/models/config.xpl" view="xpl/views/pages/index.xpl"/>
 	
 	<!-- **** APIs **** -->
 	<page path="/numishare/[^\/]+/apis/get" model="xpl/models/object/get-id.xpl" view="xpl/views/apis/get.xpl"/>	
 	<page path="/numishare/[^\/]+/apis/getNuds" view="xpl/models/xquery/aggregate-ids.xpl"/>
+	<page path="/numishare/[^\/]+/apis/getRDF" model="xpl/models/xquery/aggregate-ids.xpl" view="xpl/views/serializations/object/rdf.xpl"/>
 	<page path="/numishare/[^\/]+/apis/search" model="xpl/models/solr/feed.xpl" view="xpl/views/apis/search.xpl"/>
+	<page path="/numishare/[^\/]+/apis/type-examples" view="xpl/models/sparql/type-examples.xpl"/>
 	
 	<!-- **** AGGREGATED OBJECTS / RDF EXPORT **** -->
 	<page path="/numishare/[^\/]+/ingest" model="xpl/models/xquery/aggregate-ids.xpl" view="xpl/views/serializations/object/solr.xpl"/>
 	<page path="/numishare/[^\/]+/nomisma.rdf" view="xpl/controllers/nomisma.xpl"/>	
 	<page path="/numishare/[^\/]+/pelagios.rdf" model="xpl/models/solr/pelagios.xpl" view="xpl/views/serializations/solr/rdf.xpl"/>
-	<page path="/numishare/[^\/]+/pelagios.void.rdf" model="xpl/models/config.xpl" view="xpl/views/serializations/config/rdf-void.xpl"/>
-	<page path="/numishare/[^\/]+/nomisma.void.rdf" model="xpl/models/config.xpl" view="xpl/views/serializations/config/rdf-void.xpl"/>
+	<page path="/numishare/[^\/]+/pelagios.void.rdf" model="xpl/models/solr/rdf_count_docs.xpl" view="xpl/views/serializations/config/rdf-void.xpl"/>
+	<page path="/numishare/[^\/]+/nomisma.void.rdf" model="xpl/controllers/rdf_count_docs.xpl" view="xpl/views/serializations/config/rdf-void.xpl"/>
 	<page path="/numishare/[^\/]+/opensearch.xml" model="xpl/models/config.xpl" view="xpl/views/serializations/config/opensearch.xpl"/>
+	<page path="/numishare/[^\/]+/symbols.rdf" view="xpl/models/xquery/aggregate-symbols.xpl"/>
 	
 	<!-- **** GEOGRAPHIC EXPORT **** -->
-	<page path="/numishare/[^\/]+/findspots.kml" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/kml.xpl"/>	
+	<page path="/numishare/[^\/]+/findspots.kml" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/kml.xpl"/>
+	<page path="/numishare/[^\/]+/findspots.geojson" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/geojson.xpl"/>	
 	<page path="/numishare/[^\/]+/hoards.kml" model="xpl/models/solr/geographic-docs.xpl" view="xpl/views/serializations/solr/kml.xpl"/>
 	<page path="/numishare/[^\/]+/hoards.json" model="xpl/models/solr/geographic-docs.xpl" view="xpl/views/serializations/solr/json-timemap.xpl"/>
+	<page path="/numishare/[^\/]+/hoards.geojson" model="xpl/models/solr/geographic-docs.xpl" view="xpl/views/serializations/solr/geojson.xpl"/>
 	<page path="/numishare/[^\/]+/mints.kml" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/kml.xpl"/>
+	<page path="/numishare/[^\/]+/mints.geojson" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/geojson.xpl"/>
 	<page path="/numishare/[^\/]+/query.kml" model="xpl/models/solr/geographic-docs.xpl" view="xpl/views/serializations/solr/kml.xpl"/>
+	<page path="/numishare/[^\/]+/query.geojson" model="xpl/models/solr/geographic-docs.xpl" view="xpl/views/serializations/solr/geojson.xpl"/>
 	<page path="/numishare/[^\/]+/subjects.kml" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/kml.xpl"/>
+	<page path="/numishare/[^\/]+/subjects.geojson" model="xpl/models/solr/geographic-facets.xpl" view="xpl/views/serializations/solr/geojson.xpl"/>
 	
 	<!-- **** CSV EXPORT **** -->
 	<page path="/numishare/[^\/]+/hoards.csv" model="xpl/models/config.xpl" view="xpl/views/apis/csv-hoards.xpl"/>
@@ -102,7 +181,7 @@
 	<page path="/numishare/[^\/]+/results_ajax" model="xpl/models/solr/results_ajax.xpl" view="xpl/views/ajax/results_ajax.xpl"/>
 	
 	<!-- **** SPARQL WIDGET **** -->
-	<page path="/numishare/[^\/]+/sparql" model="xpl/models/sparql/widget.xpl" view="xpl/views/serializations/sparql/widget.xpl"/>
+	<page path="/numishare/[^\/]+/sparql" model="xpl/models/sparql/widget.xpl" view="xpl/views/serializations/sparql/widget.xpl"/>	
 	
 	<!-- **** ROOT **** -->
 	<page path="/numishare/" view="xpl/root.xpl" id="index"/>

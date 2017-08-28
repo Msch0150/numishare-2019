@@ -68,7 +68,7 @@
 		</xsl:if>
 	</xsl:variable>
 
-	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
+	<xsl:variable name="include_path" select="concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 
 	<xsl:variable name="recordType">
 		<xsl:choose>
@@ -284,15 +284,19 @@
 								<link rel="stylesheet" href="{$include_path}/css/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen"/>
 								<script type="text/javascript" src="{$include_path}/javascript/jquery.fancybox.pack.js?v=2.1.5"/>
 								<script type="text/javascript" src="{$include_path}/javascript/highcharts.js"/>
-								<script type="text/javascript" src="{$include_path}/javascript/modules/exporting.js"/>								
+								<script type="text/javascript" src="{$include_path}/javascript/modules/exporting.js"/>
+								<script type="text/javascript" src="{$include_path}/javascript/display_map_functions.js"/>
 								<script type="text/javascript" src="{$include_path}/javascript/display_functions.js"/>
 								<script type="text/javascript" src="{$include_path}/javascript/visualize_functions.js"/>
 
 								<!-- mapping -->
-								<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
-								<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"/>					
-								<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
-								<script type="text/javascript" src="{$include_path}/javascript/display_map_functions.js"/>
+								<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
+								<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
+								<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
+								<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
+								<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
+								<script type="text/javascript" src="{$include_path}/javascript/timemap_full.pack.js"/>
+								<script type="text/javascript" src="{$include_path}/javascript/param.js"/>
 							</xsl:when>
 							<!-- hoard CSS and JS dependencies -->
 							<xsl:when test="$recordType='hoard'">
@@ -342,9 +346,6 @@
 							</span>
 							<span id="mapboxKey">
 								<xsl:value-of select="//config/mapboxKey"/>
-							</span>
-							<span id="lang">
-								<xsl:value-of select="$lang"/>
 							</span>
 						</div>
 					</body>

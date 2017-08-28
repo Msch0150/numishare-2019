@@ -618,37 +618,6 @@
 			</xsl:if>
 		</xsl:for-each>
 	</xsl:template>
-	
-	<!-- ************** PROCESS GROUP OF SPARQL RESULTS FROM NOMISMA TO DISPLAY IMAGES ************** -->
-	<xsl:template match="object" mode="results">
-		<xsl:variable name="position" select="position()"/>
-		<!-- obverse -->
-		<xsl:if test="obvRef">
-			<img src="{obvRef}" style="max-width:100%">
-				<xsl:if test="$position &gt; 1">
-					<xsl:attribute name="style">display:none</xsl:attribute>
-				</xsl:if>
-			</img>
-			<br/>
-		</xsl:if>
-		
-		<!-- reverse-->
-		<xsl:if test="revRef">
-			<img src="{revRef}" style="max-width:100%">
-				<xsl:if test="$position &gt; 1">
-					<xsl:attribute name="style">display:none</xsl:attribute>
-				</xsl:if>
-			</img>
-		</xsl:if>
-		<!-- combined -->
-		<xsl:if test="comRef">
-			<img src="{comRef}" style="max-width:100%">
-				<xsl:if test="$position &gt; 1">
-					<xsl:attribute name="style">display:none</xsl:attribute>
-				</xsl:if>
-			</img>
-		</xsl:if>
-	</xsl:template>
 
 	<!-- **************** OPEN ANNOTATIONS (E.G., LINKS FROM A TEI FILE) **************** -->
 	<xsl:template match="res:sparql" mode="annotations">

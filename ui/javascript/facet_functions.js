@@ -12,7 +12,7 @@ function getQuery() {
 	var query_terms = $('#facet_form_query').attr('value').split(' AND ');
 	var non_facet_terms = new Array();
 	for (i in query_terms) {
-		if (query_terms[i].indexOf('_facet') < 0 && query_terms[i].indexOf('dob_num') < 0 && query_terms[i].indexOf('taq_num') < 0 && query_terms[i] != '*:*') {
+		if (query_terms[i].indexOf('_facet') < 0 && query_terms[i].indexOf('dob_num') < 0 && query_terms[i].indexOf('taq_num') < 0 && query_terms[i] != '*:*' && query_terms[i].indexOf('typeNumber') < 0) {
 			non_facet_terms.push(query_terms[i]);
 		}
 	}
@@ -21,13 +21,13 @@ function getQuery() {
 	}
 	
 	//hierarchical facets
-	/*$('.hierarchical-list').each(function () {
+	$('.hier-list').each(function () {
 		var field = $(this).attr('id').split('-list')[0];
 		var categories = new Array();
 		$(this).find('input:checked') .each(function () {
-			if ($(this) .parent('.h_item') .html() .indexOf('category_level') < 0 || $(this) .parent('.h_item') .children('ul') .html() .indexOf('<li') < 0 || $(this) .parent('.h_item') .children('.category_level').find('input:checked').length == 0) {
+			if ($(this) .parent('li') .html() .indexOf('category_level') < 0 || $(this) .parent('li') .children('ul') .html() .indexOf('<li') < 0 || $(this) .parent('li') .children('.category_level').find('input:checked').length == 0) {
 				segment = new Array();
-				$(this) .parents('.h_item').each(function () {
+				$(this) .parents('li').each(function () {
 					segment.push('+"' + $(this).children('input').val() + '"');
 				});
 				var joined = field + ':(' + segment.join(' ') + ')';
@@ -42,7 +42,7 @@ function getQuery() {
 				query.push(categories[0]);
 			}
 		}
-	});*/
+	});
 	
 	//get century/decades
 	var date = getDate();
@@ -60,7 +60,11 @@ function getQuery() {
 				segments.push(facet + ':"' + val[i] + '"');
 			}
 			if (segments.length > 1) {
-				query.push('(' + segments.join(' OR ') + ')');
+				if (collection_type == 'hoard' && (facet != 'taq_num' && facet != 'findspot_facet')){
+					query.push(segments.join(' AND '));
+				} else {
+					query.push('(' + segments.join(' OR ') + ')');
+				}
 			} else {
 				query.push(segments[0]);
 			}
@@ -74,6 +78,22 @@ function getQuery() {
 			if (dateRange.length > 0) {
 				query.push(dateRange);
 			}
+		}
+	}
+	
+	if ($('#ah_dateRange').length > 0){
+		if ($('#ah_fromDate').val().length > 0 || $('#ah_toDate').val().length > 0){
+			var dateRange = getAhDateRange();
+			if (dateRange.length > 0) {
+				query.push(dateRange);
+			}
+		}		
+	}
+	
+	//get typeNumber
+	if ($('#typeNumber').length > 0) {
+		if ($('#typeNumber').val().length > 0) {
+			query.push('typeNumber:' + $('#typeNumber').val());
 		}
 	}
 	
@@ -103,6 +123,15 @@ function getDateRange(collection_type) {
 	var to_era = $('#to_era') .val() == 'minus'? '-': '';
 	
 	string += '[' + (from_date == '*'? '': from_era) + from_date + ' TO ' + (to_date == '*'? '': to_era) + to_date + ']';
+	return string;
+}
+
+//get the date range for AH dates
+function getAhDateRange(){
+	var string = 'ah_num:';
+	var from_date = $('#ah_fromDate') .val().length > 0? $('#ah_fromDate') .val(): '*';
+	var to_date = $('#ah_toDate') .val().length > 0? $('#ah_toDate') .val(): '*';
+	string += '[' + from_date + ' TO ' + to_date + ']';
 	return string;
 }
 
@@ -189,20 +218,19 @@ function dateLabel() {
 function hierarchyLabel(field, title) {
 	categories = new Array();
 	$('#' + field + '_hier-list input:checked') .each(function () {
-		if ($(this) .parent('.h_item') .html() .indexOf('category_level') < 0 || $(this) .parent('.h_item') .children('ul') .html() .indexOf('<li') < 0 || $(this) .parent('.h_item') .children('.category_level').find('input:checked').length == 0) {
+		if ($(this) .parent('li') .html() .indexOf('category_level') < 0 || $(this) .parent('li') .children('ul') .html() .indexOf('<li') < 0 || $(this) .parent('li') .children('.category_level').find('input:checked').length == 0) {
 			segment = new Array();
-			$(this) .parents('.h_item').each(function () {
+			$(this) .parents('li').each(function () {
 				segment.push($(this).children('input').val().split('|')[1]);
 			});
 			var joined = segment.reverse().join('--');
 			categories.push(joined);
-			if (categories.length > 0 && categories.length <= 3) {
-				$('#' + field + '_hier_link').attr('title', title + ': ' + categories.join(', '));
-				$('#' + field + '_hier_link').children('span:nth-child(2)').text(title + ': ' + categories.join(', '));
-			} else if (categories.length > 3) {
-				$('#' + field + '_hier_link').attr('title', title + ': ' + categories.length + ' selected');
-				$('#' + field + '_hier_link').children('span:nth-child(2)').text(title + ': ' + categories.length + ' selected');
-			}
 		}
 	});
+	
+	if (categories.length > 0) {
+		$('#' + field + '_hier-btn').children('span').text(title + ': ' + categories.length + ' selected');
+	} else {
+		$('#' + field + '_hier-btn').children('span').text(title);
+	}
 }

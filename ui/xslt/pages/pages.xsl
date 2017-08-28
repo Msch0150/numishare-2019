@@ -5,7 +5,17 @@
 	<xsl:include href="../functions.xsl"/>
 
 	<xsl:param name="stub" select="substring-after(doc('input:request')/request/request-url, 'pages/')"/>	
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
 
 	<xsl:variable name="display_path">../</xsl:variable>
 	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
@@ -16,14 +26,28 @@
 				<title>
 					<xsl:value-of select="/config/title"/>
 					<xsl:text>: </xsl:text>
-					<xsl:value-of select="//page[@stub = $stub]/title"/>
+					<xsl:choose>
+						<xsl:when test="//page[@stub = $stub]/content[@lang=$lang]">
+							<xsl:value-of select="//page[@stub = $stub]/content[@lang=$lang]/title"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:choose>
+								<xsl:when test="//page[@stub = $stub]/content[@lang='en']">
+									<xsl:value-of select="//page[@stub = $stub]/content[@lang='en']/title"/>
+								</xsl:when>
+								<xsl:otherwise>
+									<xsl:value-of select="//page[@stub = $stub]/title"/>
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:otherwise>
+					</xsl:choose>
 				</title>
 				<link rel="shortcut icon" type="image/x-icon" href="{$include_path}/images/favicon.png"/>
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+				<script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 				
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
 				<xsl:if test="string(/config/google_analytics)">
@@ -42,9 +66,26 @@
 
 	<xsl:template name="pages">
 		<div class="container-fluid">
+			<xsl:if test="$lang='ar'">
+				<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
+			</xsl:if>
 			<div class="row">
 				<div class="col-md-12">
-					<xsl:copy-of select="//page[@stub = $stub]/text"/>
+					<xsl:choose>
+						<xsl:when test="//page[@stub = $stub]/content[@lang=$lang]">
+							<xsl:copy-of select="//page[@stub = $stub]/content[@lang=$lang]/text"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:choose>
+								<xsl:when test="//page[@stub = $stub]/content[@lang='en']">
+									<xsl:copy-of select="//page[@stub = $stub]/content[@lang='en']/text"/>
+								</xsl:when>
+								<xsl:otherwise>
+									<xsl:copy-of select="//page[@stub = $stub]/text"/>
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:otherwise>
+					</xsl:choose>
 				</div>
 			</div>
 		</div>

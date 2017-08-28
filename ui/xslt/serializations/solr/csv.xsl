@@ -4,7 +4,17 @@
 	<xsl:include href="../../functions.xsl"/>
 	
 	<!-- url params -->
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
 	
 	<!-- config variables -->
 	<xsl:variable name="url" select="/content/config/url"/>
@@ -39,8 +49,9 @@
 				<xsl:text>,</xsl:text>
 			</xsl:if>
 		</xsl:for-each>		
-		<xsl:text>
-</xsl:text>
+		<xsl:text>&#x0A;</xsl:text>
+		
+		<!-- each doc -->
 		<xsl:for-each select="descendant::doc">
 			<xsl:variable name="doc" as="element()*">
 				<xsl:copy-of select="."/>
@@ -55,8 +66,7 @@
 					<xsl:text>,</xsl:text>
 				</xsl:if>
 			</xsl:for-each>			
-			<xsl:text>
-</xsl:text>
+			<xsl:text>&#x0A;</xsl:text>
 		</xsl:for-each>
 	</xsl:template>
 

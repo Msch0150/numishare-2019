@@ -7,11 +7,23 @@
 
 	<xsl:param name="pipeline">maps_fullscreen</xsl:param>
 	<xsl:variable name="display_path">../</xsl:variable>
-	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
+	<xsl:variable name="include_path" select="concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 	<xsl:variable name="collection_type" select="/content/config/collection_type"/>
 
 	<xsl:param name="q" select="doc('input:request')/request/parameters/parameter[name='q']/value"/>
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
+	<xsl:variable name="numFound" select="//result[@name='response']/@numFound"/>
+	<xsl:variable name="request-uri" select="concat('http://localhost:8080', substring-before(doc('input:request')/request/request-uri, 'maps'))"/>
 	<xsl:variable name="tokenized_q" select="tokenize($q, ' AND ')"/>
 
 	<xsl:template match="/">
@@ -29,21 +41,18 @@
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>				
 
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-				<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+				<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 				<script type="text/javascript" src="{$include_path}/javascript/bootstrap-multiselect.js"/>
 				<link rel="stylesheet" href="{$include_path}/css/bootstrap-multiselect.css" type="text/css"/>
-				
-				<!-- Add fancyBox -->
-				<link rel="stylesheet" href="{$include_path}/css/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen"/>
-				<script type="text/javascript" src="{$include_path}/javascript/jquery.fancybox.pack.js?v=2.1.5"/>
+				<link type="text/css" href="{$include_path}/css/fullscreen.css" rel="stylesheet"/>
 
 				<!-- display timemap for hoards, regular openlayers map for coin and coin type collections -->
 				<xsl:choose>
 					<xsl:when test="$collection_type='hoard'">						
 						<!-- timemap dependencies -->
 						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"/>
+						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
 						<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
 						<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
@@ -53,11 +62,20 @@
 						<script type="text/javascript" src="{$include_path}/javascript/map_functions.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/facet_functions.js"/>
 					</xsl:when>
-					<xsl:otherwise>						
+					<xsl:otherwise>	
+						<!-- Add fancyBox -->
+						<link rel="stylesheet" href="{$include_path}/css/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen"/>
+						<script type="text/javascript" src="{$include_path}/javascript/jquery.fancybox.pack.js?v=2.1.5"/>
+						
 						<!-- maps-->
-						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"/>
-						<script type="text/javascript" src="{$include_path}/javascript/map_fullscreen_functions.js"/>
+						<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
+						<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.css"/>
+						<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.Default.css"/>
+						
+						<!-- js -->
+						<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"/>					
+						<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
+						<script type="text/javascript" src="{$include_path}/javascript/leaflet.markercluster.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/map_functions.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/facet_functions.js"/>
 					</xsl:otherwise>
@@ -82,9 +100,11 @@
 	<xsl:template name="maps">
 		<div id="backgroundPopup"/>
 		<div class="container-fluid" style="height:100%">
-
+			<xsl:if test="$lang='ar'">
+				<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
+			</xsl:if>
 			<xsl:choose>
-				<xsl:when test="//result[@name='response']/@numFound &gt; 0">
+				<xsl:when test="$numFound &gt; 0">
 					<xsl:choose>
 						<xsl:when test="$collection_type='hoard'">
 							<div id="timemap-legend">
@@ -186,7 +206,7 @@
 			</xsl:choose>
 			<div style="display:none">
 				<input id="facet_form_query" name="q" value="*:*" type="hidden"/>
-				<xsl:if test="string($lang)">
+				<xsl:if test="string($langParam)">
 					<input type="hidden" name="lang" value="{$lang}"/>
 				</xsl:if>
 				<span id="collection_type">
@@ -201,6 +221,9 @@
 				<span id="pipeline">
 					<xsl:value-of select="$pipeline"/>
 				</span>
+				<span id="mapboxKey">
+					<xsl:value-of select="//config/mapboxKey"/>
+				</span>
 				<span id="section">maps</span>
 				<span id="baselayers">
 					<xsl:value-of select="string-join(//config/baselayers/layer[@enabled=true()], ',')"/>
@@ -211,7 +234,7 @@
 	</xsl:template>
 
 	<xsl:template match="lst[@name='facet_fields']">
-		<xsl:for-each select="lst[not(@name='mint_geo') and number(int[@name='numFacetTerms']) &gt; 0 and not(@name='mint_facet')]|lst[@name='mint_facet' and $collection_type='hoard']">
+		<xsl:for-each select="lst[not(@name='mint_geo') and not(@name='mint_facet')]|lst[@name='mint_facet' and $collection_type='hoard']">
 
 			<xsl:variable name="val" select="@name"/>
 			<xsl:variable name="new_query">
@@ -229,26 +252,25 @@
 			<xsl:choose>
 				<xsl:when test="contains(@name, '_hier')">
 					<!--<xsl:variable name="title" select="numishare:regularize_node(substring-before(@name, '_'), $lang)"/>
-
-						<button class="ui-multiselect ui-widget ui-state-default ui-corner-all hierarchical-facet" type="button" title="{$title}" aria-haspopup="true" style="width: 180px;"
-							id="{@name}_link" label="{$q}">
-							<span class="ui-icon ui-icon-triangle-2-n-s"/>
+					
+					<div class="btn-group">
+						<button class="dropdown-toggle btn btn-default hierarchical-facet" type="button" style="width:250px;margin-bottom:10px;" title="{$title}" id="{@name}-btn" label="{$q}">
 							<span>
 								<xsl:value-of select="$title"/>
 							</span>
+							<xsl:text> </xsl:text>
+							<b class="caret"/>
 						</button>
-
-						<div class="ui-multiselect-menu ui-widget ui-widget-content ui-corner-all hierarchical-div" id="{substring-before(@name, '_hier')}-container" style="width: 180px;">
-							<div class="ui-widget-header ui-corner-all ui-multiselect-header ui-helper-clearfix ui-multiselect-hasfilter">
-								<ul class="ui-helper-reset">
-									<li class="ui-multiselect-close">
-										<a class="ui-multiselect-close hier-close" href="#"> close<span class="ui-icon ui-icon-circle-close"/>
-										</a>
-									</li>
-								</ul>
+						<ul class="dropdown-menu hier-list" id="{@name}-list">
+							<div class="text-right">
+								<a href="#" class="hier-close">close <span class="glyphicon glyphicon-remove"/></a>
 							</div>
-							<ul class="{substring-before(@name, '_hier')}-multiselect-checkboxes ui-helper-reset hierarchical-list" id="{@name}-list" style="height: 175px;" title="{$title}"/>
-						</div>-->
+							<xsl:if test="contains($q, @name)">
+								<xsl:copy-of select="document(concat($request-uri, 'get_hier?q=', encode-for-uri($q), '&amp;fq=*&amp;prefix=L1&amp;link=&amp;field=', substring-before(@name,
+									'_hier')))//ul[@id='root']/li"/>
+							</xsl:if>
+						</ul>
+					</div>-->
 				</xsl:when>
 				<xsl:when test="@name='century_num'">
 					<!--<button class="ui-multiselect ui-widget ui-state-default ui-corner-all" type="button" title="{numishare:regularize_node('date', $lang)}" aria-haspopup="true"
@@ -271,11 +293,10 @@
 						</div>-->
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:variable name="count" select="number(int[@name='numFacetTerms'])"/>
 					<xsl:variable name="mincount" as="xs:integer">
 						<xsl:choose>
-							<xsl:when test="$count &gt; 500">
-								<xsl:value-of select="ceiling($count div 500)"/>
+							<xsl:when test="$numFound &gt; 200000">
+								<xsl:value-of select="ceiling($numFound div 200000)"/>
 							</xsl:when>
 							<xsl:otherwise>1</xsl:otherwise>
 						</xsl:choose>

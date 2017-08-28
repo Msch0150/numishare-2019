@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xlink="http://www.w3.org/1999/xlink"
-	xmlns:mets="http://www.loc.gov/METS/" xmlns:numishare="https://github.com/ewg118/numishare" xmlns:res="http://www.w3.org/2005/sparql-results#"
-	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:nuds="http://nomisma.org/nuds"
-	exclude-result-prefixes="#all" version="2.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+	xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mets="http://www.loc.gov/METS/" xmlns:numishare="https://github.com/ewg118/numishare"
+	xmlns:nm="http://nomisma.org/id/" xmlns:nmo="http://nomisma.org/ontology#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:nuds="http://nomisma.org/nuds" exclude-result-prefixes="#all" version="2.0">
 
 	<!-- quantitative analysis parameters -->
-	<xsl:param name="measurement" select="doc('input:request')/request/parameters/parameter[name = 'measurement']/value"/>
-	<xsl:param name="numericType" select="doc('input:request')/request/parameters/parameter[name = 'numericType']/value"/>
-	<xsl:param name="interval" select="doc('input:request')/request/parameters/parameter[name = 'interval']/value"/>
-	<xsl:param name="fromDate" select="doc('input:request')/request/parameters/parameter[name = 'fromDate']/value"/>
-	<xsl:param name="toDate" select="doc('input:request')/request/parameters/parameter[name = 'toDate']/value"/>
-	<xsl:param name="sparqlQuery" select="doc('input:request')/request/parameters/parameter[name = 'sparqlQuery']/value"/>
+	<xsl:param name="measurement" select="doc('input:request')/request/parameters/parameter[name='measurement']/value"/>
+	<xsl:param name="numericType" select="doc('input:request')/request/parameters/parameter[name='numericType']/value"/>
+	<xsl:param name="interval" select="doc('input:request')/request/parameters/parameter[name='interval']/value"/>
+	<xsl:param name="fromDate" select="doc('input:request')/request/parameters/parameter[name='fromDate']/value"/>
+	<xsl:param name="toDate" select="doc('input:request')/request/parameters/parameter[name='toDate']/value"/>
+	<xsl:param name="sparqlQuery" select="doc('input:request')/request/parameters/parameter[name='sparqlQuery']/value"/>
 	<xsl:variable name="tokenized_sparqlQuery" as="item()*">
 		<xsl:sequence select="tokenize($sparqlQuery, '\|')"/>
 	</xsl:variable>
@@ -34,11 +34,10 @@
 		<xsl:if test="$mode = 'compare'">
 			<div class="compare_options">
 				<small>
-					<a
-						href="compare_results?q={$q}&amp;start={$start}&amp;image={$image}&amp;side={$side}&amp;mode=compare{if (string($lang)) then concat('&amp;lang=', $lang) else ''}"
+					<a href="compare_results?q={$q}&amp;start={$start}&amp;image={$image}&amp;side={$side}&amp;mode=compare{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}"
 						class="back_results">« Search results</a>
 					<xsl:text> | </xsl:text>
-					<a href="id/{$id}">Full record »</a>
+					<a href="id/{$id}{if (string($langParam)) then concat('?lang=', $langParam) else ''}">Full record »</a>
 				</small>
 			</div>
 		</xsl:if>
@@ -47,65 +46,101 @@
 			<xsl:when test="not($mode = 'compare')">
 				<xsl:call-template name="icons"/>
 				<xsl:choose>
-					<xsl:when test="$recordType = 'conceptual'">
+					<xsl:when test="$recordType='conceptual'">
 						<div class="row">
 							<div class="col-md-12">
 								<h1 id="object_title" property="skos:prefLabel">
-									<xsl:if test="string(nuds:descMeta/nuds:title/@xml:lang)">
-										<xsl:attribute name="lang" select="nuds:descMeta/nuds:title/@xml:lang"/>
+									<xsl:if test="$lang='ar'">
+										<xsl:attribute name="style">direction: ltr; text-align:right</xsl:attribute>
 									</xsl:if>
-									<xsl:value-of select="normalize-space(nuds:descMeta/nuds:title)"/>
+									<xsl:choose>
+										<xsl:when test="descendant::*:descMeta/*:title[@xml:lang=$lang]">
+											<xsl:attribute name="lang" select="$lang"/>
+											<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang=$lang]"/>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:attribute name="lang">en</xsl:attribute>
+											<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang='en']"/>
+										</xsl:otherwise>
+									</xsl:choose>
 								</h1>
-								<xsl:choose>
-									<xsl:when test="count($subtypes//subtype) &gt; 0">
-										<a href="#variants">
-											<xsl:text>Variants</xsl:text>
-										</a>
-									</xsl:when>
-									<xsl:otherwise>
+								<p>
+									<xsl:if test="$hasTypes = true()">
 										<a href="#examples">
 											<xsl:value-of select="numishare:normalizeLabel('display_examples', $lang)"/>
 										</a>
-									</xsl:otherwise>
-								</xsl:choose>
-								<!--| <a href="#charts"><xsl:value-of
-										select="numishare:normalizeLabel('display_quantitative', $lang)"/></a>-->
+										<xsl:text> | </xsl:text>
+									</xsl:if>
+									<xsl:if test="count($subtypes//subtype) &gt; 0">
+										<a href="#subtypes">Subtypes</a>
+										<xsl:text> | </xsl:text>
+									</xsl:if>
+									<a href="#charts">
+										<xsl:value-of select="numishare:normalizeLabel('display_quantitative', $lang)"/>
+									</a>
+									<xsl:if test="$hasAnnotations = true()">
+										<xsl:text> | </xsl:text>
+										<a href="#annotations">Annotations</a>
+									</xsl:if>
+								</p>
+								<xsl:if test="nuds:control/nuds:otherRecordId[@semantic='skos:broader']">
+									<xsl:variable name="broader" select="nuds:control/nuds:otherRecordId[@semantic='skos:broader']"/>
+									<p>Parent Type: <a href="{concat(//config/uri_space, $broader)}" rel="skos:broader"><xsl:value-of select="$broader"/></a></p>
+								</xsl:if>
 							</div>
 						</div>
 						<xsl:call-template name="nuds_content"/>
+
+						<!-- examples and subtypes -->
+						<xsl:if test="$hasTypes = true()">
+							<xsl:apply-templates select="document(concat($request-uri, 'apis/type-examples?id=', $id))/*" mode="type-examples"/>
+						</xsl:if>
+
 						<!-- handle subtypes if they exist -->
-						<xsl:choose>
-							<xsl:when test="count($subtypes//subtype) &gt; 0">
-								<hr/>
-								<h3 id="variants">Variants</h3>
-								<xsl:apply-templates select="$subtypes//subtype">
-									<xsl:with-param name="uri_space" select="//config/uri_space"/>
-								</xsl:apply-templates>
-							</xsl:when>
-							<xsl:otherwise>
-								<xsl:if test="$hasTypes = true()">
-									<xsl:apply-templates select="document(concat($request-uri, 'apis/type-examples?id=', $id))/*" mode="type-examples"/>
-								</xsl:if>
-							</xsl:otherwise>
-						</xsl:choose>
-						<!--<div class="row">
+						<xsl:if test="count($subtypes//subtype) &gt; 0">
+							<hr/>
+							<a name="subtypes"/>
+							<h3>Subtypes</h3>
+							<xsl:apply-templates select="$subtypes//subtype">
+								<xsl:with-param name="uri_space" select="//config/uri_space"/>
+							</xsl:apply-templates>
+						</xsl:if>
+						<div class="row">
 							<div class="col-md-12">
 								<xsl:if test="$recordType='conceptual' and string($sparql_endpoint) and //config/collection_type='cointype'">
 									<xsl:call-template name="charts"/>
 								</xsl:if>
 							</div>
-						</div>-->
+						</div>
+						
+						<!-- if there are annotations, then render -->
+						<xsl:if test="$hasAnnotations = true()">
+							<div class="row">
+								<div class="col-md-12">
+									<xsl:apply-templates select="/content/res:sparql[3]" mode="annotations"/>
+								</div>
+							</div>
+						</xsl:if>
 					</xsl:when>
-					<xsl:when test="$recordType = 'physical'">
+					<xsl:when test="$recordType='physical'">
 						<xsl:choose>
 							<xsl:when test="$orientation = 'vertical'">
 								<div class="row">
 									<div class="col-md-12">
 										<h1 id="object_title" property="dcterms:title">
-											<xsl:if test="string(nuds:descMeta/nuds:title/@xml:lang)">
-												<xsl:attribute name="lang" select="nuds:descMeta/nuds:title/@xml:lang"/>
+											<xsl:if test="$lang='ar'">
+												<xsl:attribute name="style">direction: ltr; text-align:right</xsl:attribute>
 											</xsl:if>
-											<xsl:value-of select="normalize-space(nuds:descMeta/nuds:title)"/>
+											<xsl:choose>
+												<xsl:when test="descendant::*:descMeta/*:title[@xml:lang=$lang]">
+													<xsl:attribute name="lang" select="$lang"/>
+													<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang=$lang]"/>
+												</xsl:when>
+												<xsl:otherwise>
+													<xsl:attribute name="lang">en</xsl:attribute>
+													<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang='en']"/>
+												</xsl:otherwise>
+											</xsl:choose>
 										</h1>
 									</div>
 								</div>
@@ -140,10 +175,19 @@
 								<div class="row">
 									<div class="col-md-12">
 										<h1 id="object_title" property="dcterms:title">
-											<xsl:if test="string(nuds:descMeta/nuds:title/@xml:lang)">
-												<xsl:attribute name="lang" select="nuds:descMeta/nuds:title/@xml:lang"/>
+											<xsl:if test="$lang='ar'">
+												<xsl:attribute name="style">direction: ltr; text-align:right</xsl:attribute>
 											</xsl:if>
-											<xsl:value-of select="normalize-space(nuds:descMeta/nuds:title)"/>
+											<xsl:choose>
+												<xsl:when test="descendant::*:descMeta/*:title[@xml:lang=$lang]">
+													<xsl:attribute name="lang" select="$lang"/>
+													<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang=$lang]"/>
+												</xsl:when>
+												<xsl:otherwise>
+													<xsl:attribute name="lang">en</xsl:attribute>
+													<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang='en']"/>
+												</xsl:otherwise>
+											</xsl:choose>
 										</h1>
 									</div>
 								</div>
@@ -182,6 +226,15 @@
 								</xsl:choose>
 							</xsl:when>
 						</xsl:choose>
+						
+						<!-- if there are annotations, then render -->
+						<xsl:if test="$hasAnnotations = true()">
+							<div class="row">
+								<div class="col-md-12">
+									<xsl:apply-templates select="/content/res:sparql[3]" mode="annotations"/>
+								</div>
+							</div>
+						</xsl:if>
 					</xsl:when>
 				</xsl:choose>
 			</xsl:when>
@@ -233,46 +286,38 @@
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:choose>
-					<xsl:when test="$recordType = 'conceptual'">
+					<xsl:when test="$recordType='conceptual'">
 						<div class="row">
-							<div class="col-md-6">
-								<xsl:call-template name="metadata-container"/>
-							</div>
-							<!--<div class="col-md-2">
-								<div class="text-center">
-									<xsl:apply-templates select="$sparqlResult//object" mode="results"/>
-								</div>
-							</div>-->
-							<div class="col-md-6">
-								<xsl:call-template name="map-container"/>
-							</div>
+
+							<!-- if there are no mint coordinates and no findspots (from SPARQL), then do not show the map -->
+							<xsl:choose>
+								<xsl:when test="$hasFindspots = false() and not($rdf//nmo:Mint[geo:location])">
+									<div class="col-md-12">
+										<xsl:call-template name="metadata-container"/>
+									</div>
+								</xsl:when>
+								<xsl:otherwise>
+									<div class="col-md-6 {if($lang='ar') then 'pull-right' else ''}">
+										<xsl:call-template name="metadata-container"/>
+									</div>
+									<div class="col-md-6">
+										<xsl:call-template name="map-container"/>
+									</div>
+								</xsl:otherwise>
+							</xsl:choose>
 						</div>
 					</xsl:when>
 					<xsl:otherwise>
 						<div class="row">
-							<div class="col-md-12">
-								<ul class="nav nav-pills" id="tabs">
-									<li class="active">
-										<a href="#metadata" data-toggle="pill">
-											<xsl:value-of select="numishare:normalizeLabel('display_summary', $lang)"/>
-										</a>
-									</li>
-									<li>
-										<a href="#mapTab" id="mapButton" data-toggle="pill">
-											<xsl:value-of select="numishare:normalizeLabel('display_map', $lang)"/>
-										</a>
-									</li>
-								</ul>
-								<div class="tab-content">
-									<div class="tab-pane active" id="metadata">
-										<xsl:call-template name="metadata-container"/>
-									</div>
-									<div class="tab-pane" id="mapTab">
-										<xsl:call-template name="map-container"/>
-									</div>
+							<xsl:call-template name="metadata-container"/>
+						</div>
+						<xsl:if test="$rdf//nmo:Mint">
+							<div class="row">
+								<div class="col-md-12">
+									<xsl:call-template name="map-container"/>
 								</div>
 							</div>
-						</div>
+						</xsl:if>
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:otherwise>
@@ -280,47 +325,81 @@
 	</xsl:template>
 
 	<xsl:template name="metadata-container">
-		<xsl:if test="nuds:descMeta/nuds:physDesc">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:physDesc"/>
-			</div>
-		</xsl:if>
-		<!-- process $typeDesc differently -->
-		<div class="metadata_section">
-			<xsl:apply-templates select="$nudsGroup//nuds:typeDesc">
-				<xsl:with-param name="typeDesc_resource" select="@xlink:href"/>
-			</xsl:apply-templates>
-		</div>
-		<xsl:if test="nuds:descMeta/nuds:undertypeDesc">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:undertypeDesc"/>
-			</div>
-		</xsl:if>
-		<xsl:if test="nuds:descMeta/nuds:refDesc">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:refDesc"/>
-			</div>
-		</xsl:if>
-		<xsl:if test="nuds:descMeta/nuds:adminDesc">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:adminDesc"/>
-			</div>
-		</xsl:if>
-		<xsl:if test="nuds:descMeta/nuds:findspotDesc">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:findspotDesc"/>
-			</div>
-		</xsl:if>
-		<xsl:if test="nuds:descMeta/nuds:subjectSet">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:subjectSet"/>
-			</div>
-		</xsl:if>
-		<xsl:if test="nuds:descMeta/nuds:noteSet">
-			<div class="metadata_section">
-				<xsl:apply-templates select="nuds:descMeta/nuds:noteSet"/>
-			</div>
-		</xsl:if>
+		<xsl:choose>
+			<xsl:when test="$recordType='conceptual'">
+				<div class="metadata_section">
+					<xsl:apply-templates select="$nudsGroup//nuds:typeDesc">
+						<xsl:with-param name="typeDesc_resource" select="@xlink:href"/>
+					</xsl:apply-templates>
+				</div>
+				<xsl:if test="nuds:descMeta/nuds:refDesc">
+					<div class="metadata_section">
+						<xsl:apply-templates select="nuds:descMeta/nuds:refDesc"/>
+					</div>
+				</xsl:if>
+				<xsl:if test="nuds:descMeta/nuds:subjectSet">
+					<div class="metadata_section">
+						<xsl:apply-templates select="nuds:descMeta/nuds:subjectSet"/>
+					</div>
+				</xsl:if>
+				<xsl:if test="nuds:descMeta/nuds:noteSet">
+					<div class="metadata_section">
+						<xsl:apply-templates select="nuds:descMeta/nuds:noteSet"/>
+					</div>
+				</xsl:if>
+			</xsl:when>
+			<xsl:otherwise>
+				<div class="col-md-6 {if($lang='ar') then 'pull-right' else ''}">
+					<xsl:if test="nuds:descMeta/nuds:physDesc">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:physDesc"/>
+						</div>
+					</xsl:if>
+					<!-- process $typeDesc differently -->
+					<div class="metadata_section">						
+						<xsl:for-each select="$nudsGroup//nuds:typeDesc">
+							<xsl:variable name="typeDesc_resource" select="ancestor::object/@xlink:href"/>
+							<xsl:apply-templates select=".">
+								<xsl:with-param name="typeDesc_resource" select="$typeDesc_resource"/>
+							</xsl:apply-templates>
+						</xsl:for-each>
+					</div>
+					<xsl:if test="nuds:descMeta/nuds:undertypeDesc">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:undertypeDesc"/>
+						</div>
+					</xsl:if>
+					<xsl:if test="nuds:descMeta/nuds:findspotDesc">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:findspotDesc"/>
+						</div>
+					</xsl:if>
+				</div>
+				<div class="col-md-6">
+					<xsl:if test="nuds:descMeta/nuds:refDesc">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:refDesc"/>
+						</div>
+					</xsl:if>
+					<xsl:if test="nuds:descMeta/nuds:adminDesc">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:adminDesc"/>
+						</div>
+					</xsl:if>
+
+					<xsl:if test="nuds:descMeta/nuds:subjectSet">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:subjectSet"/>
+						</div>
+					</xsl:if>
+					<xsl:if test="nuds:descMeta/nuds:noteSet">
+						<div class="metadata_section">
+							<xsl:apply-templates select="nuds:descMeta/nuds:noteSet"/>
+						</div>
+					</xsl:if>
+				</div>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 
 	<xsl:template name="map-container">
@@ -328,16 +407,15 @@
 			<xsl:value-of select="numishare:normalizeLabel('display_map', $lang)"/>
 		</h3>
 		<xsl:choose>
-			<xsl:when test="$recordType = 'conceptual'">
-				<!--<div id="timemap">
+			<xsl:when test="$recordType='conceptual'">
+				<div id="timemap">
 					<div id="mapcontainer">
 						<div id="map"/>
 					</div>
 					<div id="timelinecontainer">
 						<div id="timeline"/>
 					</div>
-				</div>-->
-				<div id="mapcontainer"/>
+				</div>
 			</xsl:when>
 			<xsl:otherwise>
 				<div id="mapcontainer"/>
@@ -396,7 +474,7 @@
 						</ul>
 					</xsl:when>
 					<xsl:otherwise>
-						<p>Source: <a rel="nm:findspot" href="{@xlink:href}"><xsl:value-of select="@xlink:href"/></a></p>
+						<p>Source: <a rel="nmo:hasFindspot" href="{@xlink:href}"><xsl:value-of select="@xlink:href"/></a></p>
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:when>
@@ -417,36 +495,28 @@
 		</ul>
 	</xsl:template>
 
-	<xsl:template match="nuds:subjectSet | nuds:noteSet">
+	<xsl:template match="nuds:subjectSet|nuds:noteSet">
 		<h3>
 			<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
 		</h3>
-		<dl class="dl-horizontal">
+		<ul>
 			<xsl:apply-templates/>
-		</dl>
+		</ul>
 	</xsl:template>
 
 	<xsl:template match="nuds:subject">
-		<dt>
-			<xsl:value-of
-				select="
-					if (string(@localType)) then
-						numishare:regularize_node(@localType, $lang)
-					else
-						numishare:regularize_node(local-name(), $lang)"
-			/>
-		</dt>
-		<dd>
-			<a
-				href="{$display_path}results?q={if (string(@localType)) then @localType else 'subject'}_facet:&#x022;{normalize-space(.)}&#x022;{if (string($lang)) then concat('&amp;lang=', $lang) else ''}">
+		<li>
+			<b><xsl:value-of select="if (string(@localType)) then @localType else numishare:regularize_node(local-name(), $lang)"/>: </b>
+			<a href="{$display_path}results?q={if (string(@localType)) then @localType else 'subject'}_facet:&#x022;{normalize-space(.)}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else
+				''}">
 				<xsl:value-of select="."/>
 			</a>
 			<xsl:if test="string(@xlink:href)">
-				<a href="{@xlink:href}" target="_blank">
-					<img src="{$include_path}/images/external.png" alt="external link" class="external_link"/>
+				<a rel="dcterms:subject" href="{@xlink:href}" target="_blank" class="external_link">
+					<span class="glyphicon glyphicon-new-window"/>
 				</a>
 			</xsl:if>
-		</dd>
+		</li>
 	</xsl:template>
 
 	<xsl:template match="nuds:note">
@@ -470,7 +540,7 @@
 		</li>
 	</xsl:template>
 
-	<xsl:template match="nuds:descripton | nuds:legend" mode="physical">
+	<xsl:template match="nuds:descripton|nuds:legend" mode="physical">
 		<span property="{numishare:normalizeProperty($recordType, local-name())}">
 			<xsl:if test="@xml:lang">
 				<xsl:attribute name="lang" select="@xml:lang"/>
@@ -481,7 +551,7 @@
 
 	<!-- hide symbols with left/right/center/exerque positions, format elsewhere -->
 	<xsl:template match="nuds:symbol[@position='left']|nuds:symbol[@position='center']|nuds:symbol[@position='right']|nuds:symbol[@position='exergue']" mode="descMeta"/>
-	
+
 	<xsl:template name="format-control-marks">
 		<li>
 			<b>Control Marks: </b>
@@ -504,8 +574,8 @@
 
 	<xsl:template name="obverse_image">
 		<xsl:variable name="obverse_image">
-			<xsl:if test="string(//mets:fileGrp[@USE = 'obverse']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href)">
-				<xsl:value-of select="//mets:fileGrp[@USE = 'obverse']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href"/>
+			<xsl:if test="string(//mets:fileGrp[@USE='obverse']/mets:file[@USE='reference']/mets:FLocat/@xlink:href)">
+				<xsl:value-of select="//mets:fileGrp[@USE='obverse']/mets:file[@USE='reference']/mets:FLocat/@xlink:href"/>
 			</xsl:if>
 		</xsl:variable>
 
@@ -514,7 +584,7 @@
 			<xsl:when test="$nudsGroup//nuds:typeDesc/nuds:obverse">
 				<xsl:for-each select="$nudsGroup//nuds:typeDesc/nuds:obverse">
 					<xsl:variable name="side" select="local-name()"/>
-					<div class="reference_image" rel="nm:obverse">
+					<div class="reference_image" rel="nmo:hasObverse">
 						<xsl:if test="string($obverse_image)">
 							<xsl:choose>
 								<xsl:when test="contains($obverse_image, 'http://')">
@@ -545,8 +615,7 @@
 				<!-- otherwise only display the image -->
 				<xsl:if test="string($obverse_image)">
 					<div class="reference_image">
-						<img src="{if (contains($obverse_image, 'http://')) then $obverse_image else concat($display_path, $obverse_image)}"
-							property="foaf:depiction" alt="{$side}"/>
+						<img src="{if (contains($obverse_image, 'http://')) then $obverse_image else concat($display_path, $obverse_image)}" property="foaf:depiction" alt="{$side}"/>
 					</div>
 				</xsl:if>
 			</xsl:otherwise>
@@ -555,8 +624,8 @@
 
 	<xsl:template name="reverse_image">
 		<xsl:variable name="reverse_image">
-			<xsl:if test="string(//mets:fileGrp[@USE = 'reverse']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href)">
-				<xsl:value-of select="//mets:fileGrp[@USE = 'reverse']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href"/>
+			<xsl:if test="string(//mets:fileGrp[@USE='reverse']/mets:file[@USE='reference']/mets:FLocat/@xlink:href)">
+				<xsl:value-of select="//mets:fileGrp[@USE='reverse']/mets:file[@USE='reference']/mets:FLocat/@xlink:href"/>
 			</xsl:if>
 		</xsl:variable>
 
@@ -565,7 +634,7 @@
 			<xsl:when test="$nudsGroup//nuds:typeDesc/nuds:reverse">
 				<xsl:for-each select="$nudsGroup//nuds:typeDesc/nuds:reverse">
 					<xsl:variable name="side" select="local-name()"/>
-					<div class="reference_image" rel="nm:reverse">
+					<div class="reference_image" rel="nmo:hasReverse">
 						<xsl:if test="string($reverse_image)">
 							<xsl:choose>
 								<xsl:when test="contains($reverse_image, 'http://')">
@@ -596,8 +665,7 @@
 				<!-- otherwise only display the image -->
 				<xsl:if test="string($reverse_image)">
 					<div class="reference_image">
-						<img src="{if (contains($reverse_image, 'http://')) then $reverse_image else concat($display_path, $reverse_image)}"
-							property="foaf:depiction" alt="{$side}"/>
+						<img src="{if (contains($reverse_image, 'http://')) then $reverse_image else concat($display_path, $reverse_image)}" property="foaf:depiction" alt="{$side}"/>
 					</div>
 				</xsl:if>
 			</xsl:otherwise>
@@ -605,8 +673,8 @@
 	</xsl:template>
 
 	<xsl:template name="legend_image">
-		<xsl:if test="string(//mets:fileGrp[@USE = 'legend']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href)">
-			<xsl:variable name="src" select="//mets:fileGrp[@USE = 'legend']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href"/>
+		<xsl:if test="string(//mets:fileGrp[@USE='legend']/mets:file[@USE='reference']/mets:FLocat/@xlink:href)">
+			<xsl:variable name="src" select="//mets:fileGrp[@USE='legend']/mets:file[@USE='reference']/mets:FLocat/@xlink:href"/>
 
 			<div class="reference_image">
 				<img src="{if (contains($src, 'http://')) then $src else concat($display_path, $src)}" alt="legend"/>
@@ -616,14 +684,11 @@
 
 	<!-- charts template -->
 	<xsl:template name="charts">
-		<xsl:variable name="axis"
-			select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nm:type_series_item &lt;', //config/uri_space, $id, '&gt;')),
+		<xsl:variable name="axis" select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nmo:hasTypeSeriesItem &lt;', //config/uri_space, $id, '&gt;')),
 			'&amp;template=avgMeasurement&amp;measurement=axis'))"/>
-		<xsl:variable name="diameter"
-			select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nm:type_series_item &lt;', //config/uri_space, $id, '&gt;')),
+		<xsl:variable name="diameter" select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nmo:hasTypeSeriesItem &lt;', //config/uri_space, $id, '&gt;')),
 			'&amp;template=avgMeasurement&amp;measurement=diameter'))"/>
-		<xsl:variable name="weight"
-			select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nm:type_series_item &lt;', //config/uri_space, $id, '&gt;')),
+		<xsl:variable name="weight" select="document(concat($request-uri, 'sparql?constraints=', encode-for-uri(concat('nmo:hasTypeSeriesItem &lt;', //config/uri_space, $id, '&gt;')),
 			'&amp;template=avgMeasurement&amp;measurement=weight'))"/>
 
 		<a name="charts"/>
@@ -633,21 +698,27 @@
 
 		<xsl:if test="number($axis) &gt; 0 or number($diameter) &gt; 0 or number($weight) &gt; 0">
 			<p>Average measurements for this coin type:</p>
-			<dl class="dl-horizontal">
+			<dl class=" {if($lang='ar') then 'dl-horizontal ar' else 'dl-horizontal'}">
 				<xsl:if test="number($axis) &gt; 0">
-					<dt><xsl:value-of select="numishare:regularize_node('axis', $lang)"/>:</dt>
+					<dt>
+						<xsl:value-of select="numishare:regularize_node('axis', $lang)"/>
+					</dt>
 					<dd>
 						<xsl:value-of select="$axis"/>
 					</dd>
 				</xsl:if>
 				<xsl:if test="number($diameter) &gt; 0">
-					<dt><xsl:value-of select="numishare:regularize_node('diameter', $lang)"/>:</dt>
+					<dt>
+						<xsl:value-of select="numishare:regularize_node('diameter', $lang)"/>
+					</dt>
 					<dd>
 						<xsl:value-of select="$diameter"/>
 					</dd>
 				</xsl:if>
 				<xsl:if test="number($weight) &gt; 0">
-					<dt><xsl:value-of select="numishare:regularize_node('weight', $lang)"/>:</dt>
+					<dt>
+						<xsl:value-of select="numishare:regularize_node('weight', $lang)"/>
+					</dt>
 					<dd>
 						<xsl:value-of select="$weight"/>
 					</dd>

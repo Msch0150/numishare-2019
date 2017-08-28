@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-	Copyright (C) 2010 Ethan Gruber
-	EADitor: https://github.com/ewg118/eaditor
-	Apache License 2.0: https://github.com/ewg118/eaditor
-	
--->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors">
 
 	<p:param type="input" name="data"/>
@@ -28,13 +22,24 @@
 		<p:input name="request" href="#request"/>
 		<p:input name="data" href="#config"/>
 		<p:input name="config">
-			<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-				<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/servlet-path, 'numishare/'), '/')"/>				
+			<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">				
+				<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
+
+				<!-- url params -->
+				<xsl:param name="start">
+					<xsl:choose>
+						<xsl:when test="string(doc('input:request')/request/parameters/parameter[name='page']/value)">
+							<xsl:value-of select="(number(doc('input:request')/request/parameters/parameter[name='page']/value) - 1) * 10000"/>
+						</xsl:when>
+						<xsl:otherwise>0</xsl:otherwise>
+					</xsl:choose>
+				</xsl:param>
+
 				<!-- config variables -->
 				<xsl:variable name="solr-url" select="concat(/config/solr_published, 'select/')"/>
 
 				<xsl:variable name="service">
-					<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+pleiades_uri:*&amp;rows=100000&amp;fl=id,recordId,title_display,pleiades_uri,findspot_uri,year_num,taq_num,tpq_num,recordType,thumbnail_obv,reference_obv,thumbnail_rev,reference_rev,timestamp&amp;mode=pelagios')"/>
+					<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+pleiades_uri:*&amp;rows=10000&amp;start=', $start, '&amp;fl=id,recordId,title_display,pleiades_uri,findspot_uri,year_num,taq_num,tpq_num,recordType,thumbnail_obv,reference_obv,thumbnail_rev,reference_rev,timestamp&amp;mode=pelagios')"/>
 				</xsl:variable>
 
 				<xsl:template match="/">

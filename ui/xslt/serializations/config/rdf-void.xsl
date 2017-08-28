@@ -9,8 +9,15 @@
 			<xsl:when test="contains(doc('input:request')/request/request-url, 'pelagios.void.rdf')">pelagios</xsl:when>
 		</xsl:choose>
 	</xsl:param>
+	
+	<xsl:variable name="url" select="/content/config/url"/>
+	<xsl:variable name="numFound" select="/content/response/result/@numFound"/>
+	
+	<xsl:template match="/">
+		<xsl:apply-templates select="/content/config"/>
+	</xsl:template>
 
-	<xsl:template match="/config">
+	<xsl:template match="config">
 		<rdf:RDF>
 			<xsl:choose>
 				<xsl:when test="$mode='pelagios'">
@@ -24,7 +31,7 @@
 	</xsl:template>
 
 	<xsl:template name="pelagios">
-		<void:dataSet>
+		<void:Dataset rdf:about="{url}">
 			<dcterms:title>
 				<xsl:value-of select="title"/>
 			</dcterms:title>
@@ -37,12 +44,25 @@
 			</dcterms:publisher>
 			<dcterms:license rdf:resource="{template/license}"/>
 			<dcterms:subject rdf:resource="http://dbpedia.org/resource/Annotation"/>
-			<void:dataDump rdf:resource="{url}pelagios.rdf"/>
-		</void:dataSet>
+			
+			<xsl:choose>
+				<xsl:when test="number($numFound) &gt; 0">
+					<xsl:variable name="floor" select="xs:integer(ceiling($numFound div 10000))"/>
+					
+					<xsl:for-each select="1 to $floor">
+						<void:dataDump rdf:resource="{$url}{$mode}.rdf?page={position()}"/>
+					</xsl:for-each>
+				</xsl:when>
+				<xsl:otherwise>
+					<void:dataDump rdf:resource="{url}{$mode}.rdf"/>
+				</xsl:otherwise>
+			</xsl:choose>
+			
+		</void:Dataset>
 	</xsl:template>
 
 	<xsl:template name="nomisma">
-		<void:dataSet rdf:about="{url}">
+		<void:Dataset rdf:about="{url}">
 			<dcterms:title>
 				<xsl:value-of select="title"/>
 			</dcterms:title>
@@ -57,9 +77,21 @@
 			</dcterms:publisher>
 			<dcterms:license rdf:resource="{template/license}"/>
 			<void:uriSpace>
-				<xsl:value-of select="concat(url, 'id/')"/>
+				<xsl:value-of select="if (string(uri_space)) then uri_space else concat(url, 'id/')"/>
 			</void:uriSpace>
-			<void:dataDump rdf:resource="{url}nomisma.rdf"/>
-		</void:dataSet>
+			
+			<xsl:choose>
+				<xsl:when test="number($numFound) &gt; 0">
+					<xsl:variable name="floor" select="xs:integer(ceiling($numFound div 10000))"/>
+					
+					<xsl:for-each select="1 to $floor">
+						<void:dataDump rdf:resource="{$url}{$mode}.rdf?page={position()}"/>
+					</xsl:for-each>
+				</xsl:when>
+				<xsl:otherwise>
+					<void:dataDump rdf:resource="{url}{$mode}.rdf"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</void:Dataset>
 	</xsl:template>
 </xsl:stylesheet>

@@ -27,16 +27,28 @@ PREFIX dcterms:	<http://purl.org/dc/terms/>
 PREFIX skos:	<http://www.w3.org/2004/02/skos/core#>
 PREFIX owl:	<http://www.w3.org/2002/07/owl#>
 PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
-PREFIX ecrm:	<http://erlangen-crm.org/current/>
 PREFIX geo:	<http://www.w3.org/2003/01/geo/wgs84_pos#>
 PREFIX nm:	<http://nomisma.org/id/>
+PREFIX nmo:	<http://nomisma.org/ontology#>
+PREFIX org:	<http://www.w3.org/ns/org#>
+PREFIX void:	<http://rdfs.org/ns/void#>
 PREFIX xsd:	<http://www.w3.org/2001/XMLSchema#>
 
-SELECT ?collection (COUNT(?collection) AS ?count) WHERE {
-?type dcterms:isPartOf <TYPE_SERIES> .
-?object nm:type_series_item ?type ;
-nm:collection ?collection .
-} GROUP BY ?collection ORDER BY ?collection]]>
+SELECT ?dataset ?publisher ?collection ?collectionLabel ?thumbnail ?homepage ?memberOf ?title ?description ?license ?rights (COUNT(?dataset) AS ?count) {
+    ?type dcterms:source <TYPE_SERIES> .
+    ?object nmo:hasTypeSeriesItem ?type ;
+            void:inDataset ?dataset .
+  OPTIONAL {?object nmo:hasCollection ?collection .
+           ?collection skos:prefLabel ?collectionLabel . FILTER langMatches(lang(?collectionLabel), "en")
+           OPTIONAL {?collection foaf:thumbnail ?thumbnail}
+           OPTIONAL {?collection foaf:homepage ?homepage}
+           OPTIONAL {?collection org:memberOf ?memberOf}}
+  ?dataset dcterms:publisher ?publisher ;
+           dcterms:title ?title FILTER (lang(?title) = "" || langMatches(lang(?title), "en")).
+  OPTIONAL {?dataset dcterms:license ?license }
+  OPTIONAL {?dataset dcterms:rights ?rights }
+  ?dataset dcterms:description ?description FILTER (lang(?description) = "" || langMatches(lang(?description), "en")) .
+  OPTIONAL {?dataset foaf:thumbnail ?thumbnail}} GROUP BY ?dataset ?publisher ?collection ?collectionLabel ?title ?thumbnail ?homepage ?memberOf ?description ?license ORDER BY ?publisher]]>
 				</xsl:variable>
 				
 				<xsl:variable name="service" select="concat($endpoint, '?query=', encode-for-uri(normalize-space(replace($query, 'TYPE_SERIES', /config/type_series))), '&amp;output=xml')"/>

@@ -3,10 +3,8 @@
   LAYOUT
   ****************************************
  */
-.alert, .submission {
-	width:50%;
-	margin:20px auto;
-	padding:5px;
+.submission {
+	font-size:larger;
 }
 .subsection {
 	margin-bottom:20px;
@@ -19,6 +17,20 @@
 	padding:5px;
 	margin:2px 0;
 }
+.alert-box {
+	width:50%;
+	margin:20px auto;
+	padding:5px;
+	border-radius: 4px;
+	border: 1px solid gray;
+}
+.highlight{
+	background-color:#F8F8F8;
+	border:1px solid #E7E7E7;
+	border-radius:4px;
+	margin-bottom:14px;
+	padding:9px 14px;
+}
 /*
   ****************************************
   ORBEON XFORM SPECIFIC STYLE
@@ -30,13 +42,17 @@
 .orbeon .xforms-label {
 	font-weight: bold;
 	display: inline-block;
-	min-width: 9em
+	min-width: 12em
 }
 .orbeon .xforms-select1-appearance-full .xforms-label {
 	vertical-align: top
 }
-.orbeon .xforms-input input, .orbeon .xforms-textarea textarea, .orbeon .xforms-select1 select {
+.orbeon .xforms-input input[type=text], .orbeon .xforms-textarea textarea, .orbeon .xforms-select1 select {
 	width: 20em;
+	margin-bottom: 2px;
+}
+.orbeon .checkbox input {
+	width: 5em;
 	margin-bottom: 2px;
 }
 .orbeon .xforms-repeat-selected-item-1 .form-td {
@@ -53,6 +69,13 @@
 }
 .xforms-output {
 	margin:0;
+}
+.xforms-output-output {
+	padding:0;
+	line-height:inherit;
+	display:inline;
+	font-size:inherit;
+	color:black
 }
 .xforms-trigger {
 	text-decoration:none;
@@ -93,18 +116,4 @@ h1, h2, h3, h4, h5, h6 {
 .pagingBtn:hover {
 	background-color:#DDDDDD;
 	text-decoration:underline;
-}
-/*
-  ****************************************
-  LAYOUT FORM
-  ****************************************
- */
-.layout-image-container {
-	margin:80px;
-	text-align:center;
-}
-.layout-image {
-	background-color:silver;
-	border:1px solid gray;
-	padding:10px 0;
 }

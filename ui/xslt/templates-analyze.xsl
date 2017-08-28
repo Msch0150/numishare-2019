@@ -16,13 +16,13 @@
 				<!-- use get_hoard_quant to calculate -->
 				<xsl:if test="$pipeline = 'display'">					
 					<xsl:copy-of
-						select="document(concat($request-uri, 'get_hoard_quant?id=', $id, '&amp;calculate=', if (string($role)) then $role else $element, '&amp;type=', $type, '&amp;exclude=', $exclude))"/>
+						select="document(concat($request-uri, 'get_hoard_quant?id=', $id, '&amp;calculate=', if (string($role)) then $role else $element, '&amp;type=', $type, '&amp;exclude=', $exclude, '&amp;lang=', $lang))"/>
 				</xsl:if>
 				<!-- if there is a compare parameter, load get_hoard_quant with document() function -->
 				<xsl:if test="string($compare) and string($calculate)">
 					<xsl:for-each select="tokenize($compare, ',')">
 						<xsl:copy-of
-							select="document(concat($request-uri, 'get_hoard_quant?id=', ., '&amp;calculate=', if (string($role)) then $role else $element, '&amp;type=', $type, '&amp;exclude=', $exclude))"
+							select="document(concat($request-uri, 'get_hoard_quant?id=', ., '&amp;calculate=', if (string($role)) then $role else $element, '&amp;type=', $type, '&amp;exclude=', $exclude, '&amp;lang=', $lang))"
 						/>
 					</xsl:for-each>
 				</xsl:if>
@@ -130,7 +130,7 @@
 
 			<xsl:text>[</xsl:text>
 			<xsl:if test="$pipeline = 'display'">
-				<xsl:value-of select="document(concat($request-uri, 'get_hoard_quant?id=', $id, '&amp;format=js&amp;calculate=date&amp;exclude=', $exclude, '&amp;type=', $type))"/>
+				<xsl:value-of select="document(concat($request-uri, 'get_hoard_quant?id=', $id, '&amp;format=js&amp;calculate=date&amp;exclude=', $exclude, '&amp;type=', $type, '&amp;lang=', $lang))"/>
 			</xsl:if>
 			<!-- if there is a compare parameter, load get_hoard_quant with document() function -->
 			<xsl:if test="string($compare) and string($calculate)">
@@ -138,7 +138,7 @@
 					<xsl:text>,</xsl:text>
 				</xsl:if>
 				<xsl:for-each select="tokenize($compare, ',')">
-					<xsl:value-of select="document(concat($request-uri, 'get_hoard_quant?id=', ., '&amp;format=js&amp;calculate=date&amp;exclude=', $exclude, '&amp;type=', $type))"/>
+					<xsl:value-of select="document(concat($request-uri, 'get_hoard_quant?id=', ., '&amp;format=js&amp;calculate=date&amp;exclude=', $exclude, '&amp;type=', $type, '&amp;lang=', $lang))"/>
 					<xsl:if test="not(position()=last())">
 						<!-- threre must be a line break between objects or there will be Javascript eval problems! -->
 						<xsl:text>,
@@ -285,12 +285,10 @@
 						</h3>
 						<div class="optional-div" style="display:none">
 							<div>
-								<dl class="dl-horizontal">
-									<h4>
-										<xsl:value-of select="numishare:normalizeLabel('visualize_exclude_certainty_codes', $lang)"/>
-									</h4>
-									<xsl:copy-of select="/content/select[@id='get_certainty_codes']"/>								
-								</dl>
+								<h4>
+									<xsl:value-of select="numishare:normalizeLabel('visualize_exclude_certainty_codes', $lang)"/>
+								</h4>
+								<xsl:apply-templates select="//config/certainty_codes"/>	
 							</div>
 							<div>
 								<h4>
@@ -657,6 +655,22 @@
 		<div class="compare-div">
 			<xsl:copy-of select="/content/select[@id='get_hoards-control']"/>
 		</div>
+	</xsl:template>
+	
+	<!-- ************** CERTAINTY CODES, GENERATED FROM CONFIG ************** -->
+	<xsl:template match="certainty_codes">
+		<select multiple="multiple" size="10" class="certainty-select">
+			<xsl:apply-templates select="descendant::code"/>
+		</select>
+	</xsl:template>
+	
+	<xsl:template match="code">		
+		<option value="{.}" class="exclude-option">
+			<xsl:if test="@accept='false'">
+				<xsl:attribute name="selected">selected</xsl:attribute>
+			</xsl:if>
+			<xsl:value-of select="."/>
+		</option>
 	</xsl:template>
 	
 	<!-- ************** CHECKBOXES ************** -->

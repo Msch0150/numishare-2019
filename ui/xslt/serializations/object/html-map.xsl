@@ -4,12 +4,22 @@
 	<xsl:include href="../../functions.xsl"/>
 	<!-- URL params -->
 	<xsl:param name="pipeline">display_map</xsl:param>
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
 	<!-- config variables -->
 	<xsl:variable name="url" select="/content/config/url"/>
 	<xsl:variable name="collection_type" select="/content/config/collection_type"/>
 	<xsl:variable name="display_path">../</xsl:variable>
-	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
+	<xsl:variable name="include_path" select="concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 	<xsl:variable name="recordType">
 		<xsl:choose>
 			<xsl:when test="descendant::nuds:nuds">
@@ -40,6 +50,9 @@
 					</head>
 					<body>
 						<div class="container-fluid">
+							<xsl:if test="$lang='ar'">
+								<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
+							</xsl:if>
 							<div class="row">
 								<div class="col-md-12">
 									<h1>301: Moved Permanently</h1>
@@ -57,6 +70,9 @@
 					</head>
 					<body>
 						<div class="container-fluid">
+							<xsl:if test="$lang='ar'">
+								<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
+							</xsl:if>
 							<div class="row">
 								<div class="col-md-12">
 									<h1>
@@ -97,15 +113,19 @@
 					</xsl:when>
 					<!-- coin-type CSS and JS dependencies -->
 					<xsl:when test="$recordType='conceptual'">
-						<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
-						<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"/>					
-						<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
+						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
+						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
+						<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
+						<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
+						<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
+						<script type="text/javascript" src="{$include_path}/javascript/timemap_full.pack.js"/>
+						<script type="text/javascript" src="{$include_path}/javascript/param.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/display_map_functions.js"/>
 					</xsl:when>
 					<!-- hoard CSS and JS dependencies -->
 					<xsl:when test="$recordType='hoard'">
 						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"/>
+						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
 						<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
 						<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
@@ -117,6 +137,9 @@
 			</head>
 			<body>
 				<div class="container-fluid" style="height:100%">
+					<xsl:if test="$lang='ar'">
+						<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
+					</xsl:if>
 					<div class="row" style="height:100%">
 						<div class="col-md-12" style="height:100%">
 							<div id="timemap-legend">
@@ -150,11 +173,10 @@
 									</table>
 								</div>
 								<small>
-									<a href="{$display_path}id/{$id}"><span class="glyphicon glyphicon-arrow-left"/>Return</a>
+									<a href="{$url}id/{$id}"><span class="glyphicon glyphicon-arrow-left"/>Return</a>
 								</small>
 							</div>
-							<div id="mapcontainer" style="height:100%"/>
-							<!--<xsl:choose>
+							<xsl:choose>
 								<xsl:when test="$recordType='physical'">
 									<div id="mapcontainer" style="height:100%"/>
 								</xsl:when>
@@ -168,7 +190,7 @@
 										</div>
 									</div>
 								</xsl:otherwise>
-							</xsl:choose>-->
+							</xsl:choose>
 						</div>
 					</div>
 				</div>
@@ -180,7 +202,14 @@
 						<xsl:value-of select="$collection_type"/>
 					</span>
 					<span id="path">
-						<xsl:value-of select="concat($display_path, 'id/')"/>
+						<xsl:choose>
+							<xsl:when test="$recordType='physical'">
+								<xsl:value-of select="concat($display_path, 'id/')"/>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:value-of select="$display_path"/>
+							</xsl:otherwise>
+						</xsl:choose>						
 					</span>
 					<span id="pipeline">
 						<xsl:value-of select="$pipeline"/>
@@ -206,8 +235,8 @@
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
 		<!-- bootstrap -->
-		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-		<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+		<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 		<link type="text/css" href="{$include_path}/css/fullscreen.css" rel="stylesheet"/>
 		<xsl:if test="string(//config/google_analytics)">
 			<script type="text/javascript">

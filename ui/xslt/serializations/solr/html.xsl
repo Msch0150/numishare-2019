@@ -6,16 +6,29 @@
 	<xsl:include href="../../functions.xsl"/>
 
 	<xsl:variable name="display_path"/>
-	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
-
+	<xsl:variable name="include_path" select="concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 	<!-- request params -->
 	<xsl:param name="pipeline">results</xsl:param>
-	<xsl:param name="lang" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
+	<xsl:param name="lang">
+		<xsl:choose>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
+			</xsl:when>
+			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:param>
+	
 	<xsl:param name="q" select="doc('input:request')/request/parameters/parameter[name='q']/value"/>
 	<xsl:param name="sort" select="doc('input:request')/request/parameters/parameter[name='sort']/value"/>
 	<xsl:param name="rows">20</xsl:param>
 	<xsl:param name="start" select="doc('input:request')/request/parameters/parameter[name='start']/value"/>
 	<xsl:variable name="request-uri" select="concat('http://localhost:8080', substring-before(doc('input:request')/request/request-uri, 'results'))"/>
+	<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
+	<xsl:variable name="role" select="/content/collections/collection[@name=$collection-name]/@role"/>
+	<xsl:variable name="authenticated" select="if (doc('input:auth')/request-security/role=$role or doc('input:auth')/request-security/role='numishare-admin') then true() else false()" as="xs:boolean"/>
 
 	<!-- blank params -->
 	<xsl:param name="mode"/>
@@ -38,6 +51,11 @@
 	<xsl:variable name="collection_type" select="/content/config/collection_type"/>
 	<xsl:variable name="sparql_endpoint" select="/content/config/sparql_endpoint"/>
 	<xsl:variable name="url" select="/content/config/url"/>
+	<xsl:variable name="positions" as="node()*">
+		<config>
+			<xsl:copy-of select="/content/config/positions"/>
+		</config>
+	</xsl:variable>
 
 	<!-- get block of images from SPARQL endpoint, via nomisma API -->
 	<xsl:variable name="sparqlResult" as="element()*">
@@ -50,6 +68,12 @@
 
 	<xsl:template match="/">
 		<html>
+			<xsl:if test="string($lang)">
+				<xsl:attribute name="lang" select="$lang"/>
+			</xsl:if>
+			<xsl:if test="$lang='ar'">
+				<xsl:attribute name="class">rtl</xsl:attribute>
+			</xsl:if>
 			<head profile="http://a9.com/-/spec/opensearch/1.1/">
 				<title>
 					<xsl:value-of select="//config/title"/>
@@ -57,15 +81,15 @@
 				</title>
 				<!-- alternates -->
 				<link rel="alternate" type="application/atom+xml" href="{concat(//config/url, 'feed/?q=', $q)}"/>
-				<link rel="alternate" type="text/csv" href="{concat(//config/url, 'query.csv/?q=', $q, if (string($sort)) then concat('&amp;sort=', $sort) else '', if(string($lang)) then
-					concat('&amp;lang=', $lang) else '')}"/>
+				<link rel="alternate" type="text/csv" href="{concat(//config/url, 'query.csv/?q=', $q, if (string($sort)) then concat('&amp;sort=', $sort) else '', if(string($langParam)) then
+					concat('&amp;lang=', $langParam) else '')}"/>
 				<xsl:choose>
 					<xsl:when test="/content/config/collection_type = 'hoard'">
-						<link rel="alternate" type="application/vnd.google-earth.kml+xml" href="{concat(//config/url, 'findspots.kml/?q=', $q, if(string($lang)) then concat('&amp;lang=', $lang) else
+						<link rel="alternate" type="application/vnd.google-earth.kml+xml" href="{concat(//config/url, 'findspots.kml/?q=', $q, if(string($langParam)) then concat('&amp;lang=', $langParam) else
 							'')}"/>
 					</xsl:when>
 					<xsl:otherwise>
-						<link rel="alternate" type="application/vnd.google-earth.kml+xml" href="{concat(//config/url, 'query.kml/?q=', $q, if(string($lang)) then concat('&amp;lang=', $lang) else '')}"
+						<link rel="alternate" type="application/vnd.google-earth.kml+xml" href="{concat(//config/url, 'query.kml/?q=', $q, if(string($langParam)) then concat('&amp;lang=', $langParam) else '')}"
 						/>
 					</xsl:otherwise>
 				</xsl:choose>
@@ -80,8 +104,8 @@
 
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
-				<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+				<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
 				<script type="text/javascript" src="{$include_path}/javascript/bootstrap-multiselect.js"/>
 				<link rel="stylesheet" href="{$include_path}/css/bootstrap-multiselect.css" type="text/css"/>
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
@@ -94,16 +118,28 @@
 				<script type="text/javascript" src="{$include_path}/javascript/result_functions.js"/>
 
 				<!-- call mapping information -->
-				<xsl:if test="//lst[contains(@name, '_geo')]/int[@name='numFacetTerms'] &gt; 0">
-					<script src="http://openlayers.org/api/2.12/OpenLayers.js" type="text/javascript"/>
-					<script src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"/>
+				<xsl:if test="count(//lst[contains(@name, '_geo')]/int) &gt; 0">
+					<!-- maps-->
+					<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
+					<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.css"/>
+					<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.Default.css"/>
+					
+					<!-- js -->
+					<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"/>					
+					<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
+					<script type="text/javascript" src="{$include_path}/javascript/leaflet.markercluster.js"/>
 					<script type="text/javascript" src="{$include_path}/javascript/result_map_functions.js"/>
 				</xsl:if>
-				<xsl:if test="string(/config/google_analytics)">
+				<xsl:if test="string(//config/google_analytics)">
 					<script type="text/javascript">
 						<xsl:value-of select="//config/google_analytics"/>
 					</script>
 				</xsl:if>
+
+				<!-- meta tags-->
+				<xsl:for-each select="descendant::str[starts-with(@name, 'reference_')]">
+					<meta property="og:image" content="{.}"/>
+				</xsl:for-each>
 			</head>
 			<body>
 				<xsl:call-template name="header"/>
@@ -116,41 +152,124 @@
 	<xsl:template name="results">
 		<!--<xsl:copy-of select="$sparqlResult"/>-->
 		<div class="container-fluid">
+			<!--<xsl:copy-of select="doc('input:request')"/>-->
+
+			<xsl:if test="$lang='ar'">
+				<xsl:attribute name="style">direction: rtl;</xsl:attribute>
+			</xsl:if>
 			<div class="row">
-				<div class="col-md-3">
+				<div class="col-md-9 col-md-push-3">
+					<div class="container-fluid">					
+						<xsl:call-template name="remove_facets"/>
+						<xsl:choose>
+							<xsl:when test="$numFound &gt; 0">
+								<!-- include resultMap div when there are geographical results-->
+								<xsl:if test="count(//lst[@name='mint_geo']/int) &gt; 0 or count(//lst[@name='findspot_geo']/int) &gt; 0">
+									<div style="display:none">
+										<div id="resultMap"/>
+									</div>
+								</xsl:if>
+								
+								<!-- display link to return to the identify page, if referred from there -->
+								<xsl:if test="tokenize(doc('input:request')/request/headers/header[name='referer']/value, '/')[last()] = 'identify'">
+									<a href="#" onclick="window.history.back();"><span class="glyphicon glyphicon-arrow-left"/> Return to previous query on Identify page.</a>
+								</xsl:if>	
+								
+								<xsl:call-template name="paging"/>
+								<xsl:call-template name="sort"/>
+								<xsl:apply-templates select="descendant::doc"/>
+								<xsl:call-template name="paging"/>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:choose>
+									<xsl:when test="tokenize(doc('input:request')/request/headers/header[name='referer']/value, '/')[last()] = 'identify'">
+										<h2> No results found. <a href="#" onclick="window.history.back();">Start over.</a></h2>
+									</xsl:when>
+									<xsl:otherwise>
+										<h2> No results found. <a href="results">Start over.</a></h2>
+									</xsl:otherwise>
+								</xsl:choose>
+							</xsl:otherwise>
+						</xsl:choose>
+					</div>
+				</div>
+				<div class="col-md-3 col-md-pull-9">
 					<xsl:if test="//result[@name='response']/@numFound &gt; 0">
 						<div class="data_options">
+							
+							<xsl:variable name="requestParameters" as="node()*">
+								<params>
+									<xsl:if test="string($q)">
+										<param>
+											<xsl:text>q=</xsl:text>
+											<xsl:value-of select="$q"/>
+										</param>
+									</xsl:if>
+									<xsl:if test="string($langParam)">
+										<param>
+											<xsl:text>lang=</xsl:text>
+											<xsl:value-of select="$langParam"/>
+										</param>
+									</xsl:if>
+									<xsl:if test="string($sort)">
+										<param>
+											<xsl:text>sort=</xsl:text>
+											<xsl:value-of select="$sort"/>
+										</param>
+									</xsl:if>
+								</params>								
+							</xsl:variable>
+							<xsl:variable name="query">
+								<xsl:if test="count($requestParameters//param) &gt; 0">
+									<xsl:text>?</xsl:text>
+								</xsl:if>
+								<xsl:value-of select="string-join($requestParameters//param, '&amp;')"/>
+							</xsl:variable>
+							
 							<h3>
 								<xsl:value-of select="numishare:normalizeLabel('results_data-options', $lang)"/>
 							</h3>
-							<a href="{$display_path}feed/?q={$q}{if(string($lang)) then concat('&amp;lang=', $lang) else ''}">
+							<a href="{$display_path}feed/{$query}">
 								<img src="{$include_path}/images/atom-medium.png" title="Atom" alt="Atom"/>
 							</a>
-							<xsl:if test="//lst[@name='mint_geo']/int[@name='numFacetTerms'] &gt; 0">
+							<xsl:if test="count(//lst[@name='mint_geo']/int) &gt; 0">
 								<xsl:choose>
 									<xsl:when test="/content/config/collection_type = 'hoard'">
-										<a href="{$display_path}findspots.kml?q={$q}{if(string($lang)) then concat('&amp;lang=', $lang) else ''}">
+										<a href="{$display_path}findspots.kml{$query}">
 											<img src="{$include_path}/images/googleearth.png" alt="KML" title="KML: Limit, 500 objects"/>
 										</a>
 									</xsl:when>
 									<xsl:otherwise>
-										<a href="{$display_path}query.kml?q={$q}{if(string($lang)) then concat('&amp;lang=', $lang) else ''}">
+										<a href="{$display_path}query.kml{$query}">
 											<img src="{$include_path}/images/googleearth.png" alt="KML" title="KML: Limit, 500 objects"/>
 										</a>
 									</xsl:otherwise>
 								</xsl:choose>
 
 							</xsl:if>
-							<a href="{$display_path}query.csv?q={$q}{if(string($lang)) then concat('&amp;lang=', $lang) else ''}{if (string($sort)) then concat('&amp;sort=', $sort) else ''}">
+							<a href="{$display_path}query.csv{$query}">
 								<!-- the image below is copyright of Silvestre Herrera, available freely on wikimedia commons: http://commons.wikimedia.org/wiki/File:X-office-spreadsheet_Gion.svg -->
 								<img src="{$include_path}/images/spreadsheet.png" title="CSV" alt="CSV"/>
 							</a>
-							<a href="{$display_path}visualize?compare={$q}{if(string($lang)) then concat('&amp;lang=', $lang) else ''}">
+							<a href="{$display_path}visualize?compare={substring-after($query, 'q=')}">
 								<!-- the image below is copyright of Mark James, available freely on wikimedia commons: http://commons.wikimedia.org/wiki/File:Chart_bar.png -->
 								<img src="{$include_path}/images/visualize.png" title="Visualize" alt="Visualize"/>
 							</a>
+							<xsl:if test="//lst[@name='mint_geo'][count(int) &gt; 0] or //lst[@name='findspot_geo'][count(int) &gt; 0]">
+								<div id="geodata">
+									<h4><xsl:value-of select="numishare:regularize_node('geographic', $lang)"/></h4>
+									<ul>
+										<xsl:if test="//lst[@name='mint_geo'][count(int) &gt; 0]">
+											<li><b>Mints: </b> <a href="{$display_path}mints.geojson{$query}">geoJSON</a>, <a href="{$display_path}mints.kml{$query}">KML</a></li>
+										</xsl:if>
+										<xsl:if test="//lst[@name='findspot_geo'][count(int) &gt; 0]">
+											<li><b>Findspots: </b>  <a href="{$display_path}findspots.geojson{$query}">geoJSON</a>, <a href="{$display_path}findspots.kml{$query}">KML</a></li>
+										</xsl:if>									
+									</ul>
+								</div>
+							</xsl:if>							
 						</div>
-						<div id="refine_results">							
+						<div id="refine_results">
 							<xsl:call-template name="quick_search"/>
 							<h3>
 								<xsl:value-of select="numishare:normalizeLabel('results_refine-results', $lang)"/>
@@ -160,28 +279,6 @@
 
 
 					</xsl:if>
-				</div>
-				<div class="col-md-9">
-					<div class="container-fluid">
-						<xsl:call-template name="remove_facets"/>
-						<xsl:choose>
-							<xsl:when test="$numFound &gt; 0">
-								<!-- include resultMap div when there are geographical results-->
-								<xsl:if test="//lst[@name='mint_geo']/int[@name='numFacetTerms'] &gt; 0">
-									<div style="display:none">
-										<div id="resultMap"/>
-									</div>
-								</xsl:if>
-								<xsl:call-template name="paging"/>
-								<xsl:call-template name="sort"/>
-								<xsl:apply-templates select="descendant::doc"/>
-								<xsl:call-template name="paging"/>
-							</xsl:when>
-							<xsl:otherwise>
-								<h2> No results found. <a href="results?q=*:*">Start over.</a></h2>
-							</xsl:otherwise>
-						</xsl:choose>
-					</div>
 				</div>
 			</div>
 			<div id="backgroundPopup"/>
@@ -194,6 +291,12 @@
 				</span>
 				<span id="baselayers">
 					<xsl:value-of select="string-join(//config/baselayers/layer[@enabled=true()], ',')"/>
+				</span>
+				<span id="path">
+					<xsl:value-of select="$display_path"/>
+				</span>
+				<span id="mapboxKey">
+					<xsl:value-of select="//config/mapboxKey"/>
 				</span>
 				<div id="ajax-temp"/>
 			</div>
