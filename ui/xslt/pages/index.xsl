@@ -25,7 +25,7 @@
 				concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 
 
-	<xsl:template match="/content/config">
+	<xsl:template match="//config">
 		<html lang="en">
 			<head>
 				<title>
