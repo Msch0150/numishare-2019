@@ -45,6 +45,14 @@ services:
       - type: volume
         source: config
         target: /exist/config
+  iiif:
+    image: lorisimageserver/loris
+    container_name: numishare_iiif
+    #build: ./loris
+    volumes:
+      - ./docker-loris-data/images:/opt/loris/tests/img
+    ports:
+      - "10206:5004"
 
 volumes:
   data:
