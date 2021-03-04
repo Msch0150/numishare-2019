@@ -20,6 +20,7 @@ services:
       - "./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml"
       - "./web.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/web.xml"
       - "./properties-local.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/config/properties-local.xml"
+      - "./admin.xhtml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/xforms/admin.xhtml"
   solr:
     container_name: solr
     image: solr:8.6.2
