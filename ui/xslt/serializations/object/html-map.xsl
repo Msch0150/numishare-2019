@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:nuds="http://nomisma.org/nuds"
-	xmlns:nh="http://nomisma.org/nudsHoard" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:numishare="https://github.com/ewg118/numishare"
-	xmlns:res="http://www.w3.org/2005/sparql-results#" exclude-result-prefixes="#all" version="2.0">
+	xmlns:nmo="http://nomisma.org/ontology#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:nh="http://nomisma.org/nudsHoard"
+	xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:numishare="https://github.com/ewg118/numishare" xmlns:res="http://www.w3.org/2005/sparql-results#"
+	exclude-result-prefixes="#all" version="2.0">
 	<xsl:include href="../../functions.xsl"/>
 	<!-- URL params -->
 	<xsl:param name="pipeline">display_map</xsl:param>
@@ -20,7 +21,12 @@
 	<xsl:variable name="url" select="/content/config/url"/>
 	<xsl:variable name="collection_type" select="/content/config/collection_type"/>
 	<xsl:variable name="display_path">../</xsl:variable>
-	<xsl:variable name="include_path" select="if (string(//config/theme/themes_url)) then concat(//config/theme/themes_url, //config/theme/orbeon_theme) else concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
+	<xsl:variable name="include_path"
+		select="
+			if (string(//config/theme/themes_url)) then
+				concat(//config/theme/themes_url, //config/theme/orbeon_theme)
+			else
+				concat('http://', doc('input:request')/request/server-name, ':8080/orbeon/themes/', //config/theme/orbeon_theme)"/>
 	<xsl:variable name="recordType">
 		<xsl:choose>
 			<xsl:when test="descendant::nuds:nuds">
@@ -31,7 +37,55 @@
 	</xsl:variable>
 	<xsl:variable name="id" select="normalize-space(//*[local-name() = 'recordId'])"/>
 
-	<xsl:variable name="hasFindspots" select="if (doc('input:hasFindspots')//res:sparql/res:boolean) then doc('input:hasFindspots')//res:sparql/res:boolean else false()" as="xs:boolean"/>
+	<xsl:variable name="hasFindspots"
+		select="
+			if (doc('input:hasFindspots')//res:sparql/res:boolean) then
+				doc('input:hasFindspots')//res:sparql/res:boolean
+			else
+				false()"
+		as="xs:boolean"/>
+
+	<xsl:variable name="nudsGroup" as="element()*">
+		<nudsGroup>
+			<xsl:choose>
+				<xsl:when test="descendant::nuds:typeDesc[string(@xlink:href)]">
+					<xsl:variable name="uri" select="descendant::nuds:typeDesc/@xlink:href"/>
+
+					<xsl:call-template name="numishare:getNudsDocument">
+						<xsl:with-param name="uri" select="$uri"/>
+					</xsl:call-template>
+				</xsl:when>
+				<xsl:otherwise>
+					<object>
+						<xsl:copy-of select="descendant::nuds:typeDesc"/>
+					</object>
+				</xsl:otherwise>
+			</xsl:choose>
+		</nudsGroup>
+	</xsl:variable>
+
+	<!-- get non-coin-type RDF in the document -->
+	<xsl:variable name="rdf" as="element()*">
+		<rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:nm="http://nomisma.org/id/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+			xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+			xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:org="http://www.w3.org/ns/org#"
+			xmlns:nomisma="http://nomisma.org/" xmlns:nmo="http://nomisma.org/ontology#">
+			<xsl:variable name="id-param">
+				<xsl:for-each
+					select="
+						distinct-values(descendant::*[not(local-name() = 'typeDesc') and not(local-name() = 'reference')][contains(@xlink:href,
+						'nomisma.org')]/@xlink:href | $nudsGroup/descendant::*[not(local-name() = 'object') and not(local-name() = 'typeDesc')][contains(@xlink:href, 'nomisma.org')]/@xlink:href)">
+					<xsl:value-of select="substring-after(., 'id/')"/>
+					<xsl:if test="not(position() = last())">
+						<xsl:text>|</xsl:text>
+					</xsl:if>
+				</xsl:for-each>
+			</xsl:variable>
+
+			<xsl:variable name="rdf_url" select="concat('http://nomisma.org/apis/getRdf?identifiers=', encode-for-uri($id-param))"/>
+			<xsl:copy-of select="document($rdf_url)/rdf:RDF/*"/>
+		</rdf:RDF>
+	</xsl:variable>
 
 	<xsl:template match="/">
 		<xsl:choose>
@@ -43,7 +97,7 @@
 					</head>
 					<body>
 						<div class="container-fluid">
-							<xsl:if test="$lang = 'ar'">
+							<xsl:if test="//config/languages/language[@code = $lang]/@rtl = true()">
 								<xsl:attribute name="style">direction: rtl;</xsl:attribute>
 							</xsl:if>
 							<div class="row">
@@ -56,7 +110,7 @@
 										<xsl:for-each select="descendant::*:otherRecordId[@semantic = 'dcterms:isReplacedBy']">
 											<xsl:variable name="uri"
 												select="
-													if (contains(., 'http://')) then
+													if (matches(., 'https?://')) then
 														.
 													else
 														concat($url, 'id/', .)"/>
@@ -90,32 +144,24 @@
 					<xsl:when test="$recordType = 'conceptual'">
 						<xsl:if test="$hasFindspots = true()">
 							<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-							<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
 							<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
 							<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
 							<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
 							<script type="text/javascript" src="{$include_path}/javascript/timemap_full.pack.js"/>
 							<script type="text/javascript" src="{$include_path}/javascript/param.js"/>
 						</xsl:if>
-						
+
 						<script type="text/javascript" src="{$include_path}/javascript/display_map_functions.js"/>
 					</xsl:when>
 					<!-- hoard CSS and JS dependencies -->
 					<xsl:when test="$recordType = 'hoard'">
-						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
-						<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
-						<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
-						<script type="text/javascript" src="{$include_path}/javascript/timemap_full.pack.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/param.js"/>
 						<script type="text/javascript" src="{$include_path}/javascript/display_hoard_functions.js"/>
 					</xsl:when>
 				</xsl:choose>
 			</head>
 			<body>
 				<div class="container-fluid" style="height:100%">
-					<xsl:if test="$lang = 'ar'">
+					<xsl:if test="//config/languages/language[@code = $lang]/@rtl = true()">
 						<xsl:attribute name="style">direction: rtl;</xsl:attribute>
 					</xsl:if>
 					<div class="row" style="height:100%">
@@ -129,20 +175,34 @@
 										<tbody>
 											<tr>
 												<td style="background-color:#6992fd;border:2px solid black;width:50px;"/>
-												<td style="width:100px">
+												<td style="width:100px;padding-left:6px;">
 													<xsl:value-of select="numishare:regularize_node('mint', $lang)"/>
 												</td>
 											</tr>
+											<xsl:if test="$rdf//nmo:Mint[skos:related]">
+												<!-- only display the uncertain mint key if there's an uncertain mint match -->
+												<td style="background-color:#666666;border:2px solid black;width:50px;"/>							
+												<td style="width:150px;padding-left:6px;">
+													<xsl:value-of select="numishare:regularize_node('mint', $lang)"/>
+													<xsl:text> (uncertain)</xsl:text>
+												</td>
+											</xsl:if>
 											<tr>
 												<td style="background-color:#d86458;border:2px solid black;width:50px;"/>
-												<td style="width:100px">
+												<td style="width:100px;padding-left:6px;">
+													<xsl:value-of select="numishare:regularize_node('hoard', $lang)"/>
+												</td>
+											</tr>
+											<tr>
+												<td style="background-color:#f98f0c;border:2px solid black;width:50px;"/>
+												<td style="width:100px;padding-left:6px;">
 													<xsl:value-of select="numishare:regularize_node('findspot', $lang)"/>
 												</td>
 											</tr>
 											<xsl:if test="descendant::nuds:subject[contains(@xlink:href, 'geonames.org')]">
 												<tr>
 													<td style="background-color:#00e64d;border:2px solid black;width:50px;"/>
-													<td style="width:100px">
+													<td style="width:100px;padding-left:6px;">
 														<xsl:value-of select="numishare:regularize_node('subject', $lang)"/>
 													</td>
 												</tr>
@@ -154,38 +214,7 @@
 									<a href="{$url}id/{$id}"><span class="glyphicon glyphicon-arrow-left"/>Return</a>
 								</small>
 							</div>
-							<xsl:choose>
-								<xsl:when test="$recordType = 'physical'">
-									<div id="mapcontainer" style="height:100%"/>
-								</xsl:when>
-								<xsl:when test="$recordType = 'conceptual'">
-									<xsl:choose>
-										<xsl:when test="$hasFindspots = true()">
-											<div id="timemap" style="height:100%">
-												<div id="mapcontainer" class="fullscreen">
-													<div id="map"/>
-												</div>
-												<div id="timelinecontainer">
-													<div id="timeline"/>
-												</div>
-											</div>
-										</xsl:when>
-										<xsl:otherwise>
-											<div id="mapcontainer" style="height:100%"/>
-										</xsl:otherwise>
-									</xsl:choose>
-								</xsl:when>
-								<xsl:when test="$recordType='hoard'">
-									<div id="timemap" style="height:100%">
-										<div id="mapcontainer" class="fullscreen">
-											<div id="map"/>
-										</div>
-										<div id="timelinecontainer">
-											<div id="timeline"/>
-										</div>
-									</div>
-								</xsl:when>
-							</xsl:choose>
+							<div id="mapcontainer" style="height:100%"/>
 						</div>
 					</div>
 				</div>
@@ -205,7 +234,7 @@
 								<xsl:value-of select="concat($display_path, 'id/')"/>
 							</xsl:when>
 							<xsl:otherwise>
-								<xsl:value-of select="$display_path"/>
+								<xsl:value-of select="concat($display_path, 'id/')"/>
 							</xsl:otherwise>
 						</xsl:choose>
 					</span>
@@ -230,6 +259,7 @@
 			</body>
 		</html>
 	</xsl:template>
+	
 	<xsl:template name="generic_head">
 		<title id="{$id}">
 			<xsl:value-of select="//config/title"/>
@@ -238,11 +268,23 @@
 		</title>
 		<!-- CSS -->
 		<link rel="shortcut icon" type="image/x-icon" href="{$include_path}/images/favicon.png"/>
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		
+		<xsl:for-each select="//config/includes/include">
+			<xsl:choose>
+				<xsl:when test="@type = 'css'">
+					<link type="text/{@type}" rel="stylesheet" href="{@url}"/>
+				</xsl:when>
+				<xsl:when test="@type = 'javascript'">
+					<script type="text/{@type}" src="{@url}"/>
+				</xsl:when>
+			</xsl:choose>
+		</xsl:for-each>
+		
 		<!-- bootstrap -->
-		<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
-		<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
+		<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+		<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"/>
 		<link type="text/css" href="{$include_path}/css/fullscreen.css" rel="stylesheet"/>
 		<xsl:if test="string(//config/google_analytics)">
 			<script type="text/javascript">
@@ -250,8 +292,8 @@
 			</script>
 		</xsl:if>
 
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css"/>
-		<script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js"/>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0/dist/leaflet.css"/>
+		<script src="https://unpkg.com/leaflet@1.0.0/dist/leaflet.js"/>
 		<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
 	</xsl:template>
 </xsl:stylesheet>

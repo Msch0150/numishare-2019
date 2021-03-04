@@ -22,7 +22,7 @@
 			</xsl:when>
 		</xsl:choose>
 	</xsl:param>
-	<xsl:variable name="request-uri" select="concat('http://localhost:8080', substring-before(doc('input:request')/request/request-uri, 'maps'))"/>
+	<xsl:variable name="request-uri" select="concat('http://localhost:', if (//config/server-port castable as xs:integer) then //config/server-port else '8080', substring-before(doc('input:request')/request/request-uri, 'maps'))"/>
 	<xsl:variable name="numFound" select="//result[@name='response']/@numFound"/>
 	<xsl:variable name="tokenized_q" select="tokenize($q, ' AND ')"/>
 
@@ -38,47 +38,41 @@
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 				<!-- jquery -->
-				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>				
+				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"/>				
+
+				<xsl:for-each select="//config/includes/include">
+					<xsl:choose>
+						<xsl:when test="@type = 'css'">
+							<link type="text/{@type}" rel="stylesheet" href="{@url}"/>
+						</xsl:when>
+						<xsl:when test="@type = 'javascript'">
+							<script type="text/{@type}" src="{@url}"/>
+						</xsl:when>
+					</xsl:choose>
+				</xsl:for-each>
 
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
-				<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+				<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"/>
 				<script type="text/javascript" src="{$include_path}/javascript/bootstrap-multiselect.js"/>
 				<link rel="stylesheet" href="{$include_path}/css/bootstrap-multiselect.css" type="text/css"/>
 				<!-- local theme and styling -->
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
 
-				<!-- display timemap for hoards, regular openlayers map for coin and coin type collections -->
-				<xsl:choose>
-					<xsl:when test="$collection_type='hoard'">
-						<!-- timemap dependencies -->
-						<script type="text/javascript" src="http://openlayers.org/api/2.12/OpenLayers.js"/>
-						<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.20&amp;sensor=false"/>
-						<script type="text/javascript" src="{$include_path}/javascript/mxn.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/timeline-2.3.0.js"/>
-						<link type="text/css" href="{$include_path}/css/timeline-2.3.0.css" rel="stylesheet"/>
-						<script type="text/javascript" src="{$include_path}/javascript/timemap_full.pack.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/param.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/map_functions.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/facet_functions.js"/>
-					</xsl:when>
-					<xsl:otherwise>
-						<!-- Add fancyBox -->
-						<link rel="stylesheet" href="{$include_path}/css/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen"/>
-						<script type="text/javascript" src="{$include_path}/javascript/jquery.fancybox.pack.js?v=2.1.5"/>
-						<!-- maps-->
-						<link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css"/>
-						<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.css"/>
-						<link rel="stylesheet" href="{$include_path}/css/MarkerCluster.Default.css"/>
-						
-						<!-- js -->
-						<script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js"/>					
-						<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/leaflet.markercluster.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/map_functions.js"/>
-						<script type="text/javascript" src="{$include_path}/javascript/facet_functions.js"/>
-					</xsl:otherwise>
-				</xsl:choose>
+				<!-- Add fancyBox -->
+				<link rel="stylesheet" href="{$include_path}/css/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen"/>
+				<script type="text/javascript" src="{$include_path}/javascript/jquery.fancybox.pack.js?v=2.1.5"/>
+				<!-- maps-->
+				<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0/dist/leaflet.css"/>
+				<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"/>
+				<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"/>
+				
+				<!-- js -->
+				<script src="https://unpkg.com/leaflet@1.0.0/dist/leaflet.js"/>					
+				<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
+				<script type="text/javascript" src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"/>
+				<script type="text/javascript" src="{$include_path}/javascript/map_functions.js"/>
+				<script type="text/javascript" src="{$include_path}/javascript/facet_functions.js"/>
 
 				<!-- Google Analytics -->
 				<xsl:if test="string(//config/google_analytics)">
@@ -97,7 +91,7 @@
 
 	<xsl:template name="maps">
 		<div class="container-fluid">
-			<xsl:if test="$lang='ar'">
+			<xsl:if test="//config/languages/language[@code = $lang]/@rtl = true()">
 				<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
 			</xsl:if>
 			<div class="row">
@@ -119,49 +113,37 @@
 							</div>
 						</div>
 					</div>
-					<!-- display timemap divs for hoard records or regular map + ajax results div for non-hoard collections -->
+					
 					<div class="row">
 						<div class="col-md-12 maps-page">
-							<xsl:choose>
-								<xsl:when test="$collection_type='hoard'">
-									<div id="timemap">
-										<div id="mapcontainer">
-											<div id="map"/>
-										</div>
-										<div id="timelinecontainer">
-											<div id="timeline"/>
-										</div>
-									</div>
-								</xsl:when>
-								<xsl:otherwise>
-									<div id="mapcontainer"/>
-									<div class="legend">
-										<table>
-											<tbody>
-												<tr>
-													<th style="width:100px">
-														<xsl:value-of select="numishare:normalizeLabel('maps_legend', $lang)"/>
-													</th>
-													<td style="background-color:#6992fd;border:2px solid black;width:50px;"/>
-													<td style="width:100px">
-														<xsl:value-of select="numishare:regularize_node('mint', $lang)"/>
-													</td>
-													<td style="background-color:#d86458;border:2px solid black;width:50px;"/>
-													<td style="width:100px">
-														<xsl:value-of select="numishare:regularize_node('findspot', $lang)"/>
-													</td>
-													<td style="background-color:#00e64d;border:2px solid black;width:50px;"/>
-													<td style="width:100px">
-														<xsl:value-of select="numishare:regularize_node('subject', $lang)"/>
-													</td>
-												</tr>
-											</tbody>
-										</table>
-									</div>
-									<a name="results"/>
-									<div id="results"/>
-								</xsl:otherwise>
-							</xsl:choose>
+							<div id="mapcontainer"/>
+							<div class="legend">
+								<table>
+									<tbody>
+										<tr>
+											<th style="width:100px">
+												<xsl:value-of select="numishare:normalizeLabel('maps_legend', $lang)"/>
+											</th>
+											<td style="background-color:#6992fd;border:2px solid black;width:50px;"/>
+											<td style="width:100px;padding-left:5px">
+												<xsl:value-of select="numishare:regularize_node('mint', $lang)"/>
+											</td>
+											<td style="background-color:#d86458;border:2px solid black;width:50px;"/>
+											<td style="width:100px;padding-left:5px">
+												<xsl:value-of select="numishare:regularize_node('findspot', $lang)"/>
+											</td>
+											<xsl:if test="$collection_type != 'hoard'">												
+												<td style="background-color:#00e64d;border:2px solid black;width:50px;"/>
+												<td style="width:100px;padding-left:5px">
+													<xsl:value-of select="numishare:regularize_node('subject', $lang)"/>
+												</td>
+											</xsl:if>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							
+							<div id="results"/>
 						</div>
 					</div>
 				</xsl:when>

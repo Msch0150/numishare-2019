@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Copyright (C) 2010 Ethan Gruber
-	EADitor: https://github.com/ewg118/eaditor
-	Apache License 2.0: https://github.com/ewg118/eaditor
-	
+	Author: Ethan Gruber
+	Date modified: April 2020
+	Function: Execute a Solr query to get a list published hoards matching a particular query (default is all hoards)	
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors">
 
@@ -30,7 +29,7 @@
 		<p:input name="config">
 			<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare">
 				<xsl:include href="../../../ui/xslt/functions.xsl"/>
-				<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
+				<xsl:variable name="collection-name" select="if (/config/union_type_catalog/@enabled = true()) then concat('(', string-join(/config/union_type_catalog/series/@collectionName, '+OR+'), ')')  					else substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
 				<xsl:param name="q" select="doc('input:request')/request/parameters/parameter[name='q']/value"/>	
 				<xsl:param name="lang">
 					<xsl:choose>
@@ -57,20 +56,20 @@
 						<xsl:when test="string($q)">
 							<xsl:choose>
 								<xsl:when test="string($lang)">
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+', encode-for-uri($q), '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=title_display%20asc')"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+', encode-for-uri($q), '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=recordId%20asc')"/>
 								</xsl:when>
 								<xsl:otherwise>
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+', encode-for-uri($q), '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=title_display%20asc')"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+', encode-for-uri($q), '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=recordId%20asc')"/>
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:when>
 						<xsl:otherwise>
 							<xsl:choose>
 								<xsl:when test="string($lang)">
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=title_display%20asc')"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=recordId%20asc')"/>
 								</xsl:when>
 								<xsl:otherwise>
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=title_display%20asc')"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+recordType:hoard+AND+hasContents:true&amp;start=0&amp;rows=10000&amp;fl=id,recordId,title_display&amp;sort=recordId%20asc')"/>
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:otherwise>

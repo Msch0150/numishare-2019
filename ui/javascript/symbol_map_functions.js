@@ -1,3 +1,7 @@
+/* Author: Ethan Gruber
+ * Date: June 2020
+ * Function: JQuery functions for the /symbol/ namespace in Numishare. Displays map for related hoards and mints for a symbol URI
+ */
 $(document).ready(function () {
     var uri = $('#objectURI').text();
     initialize_map(uri);
@@ -15,26 +19,15 @@ function initialize_map(uri) {
     });
     
     var imperium = L.tileLayer(
-    'http://dare.ht.lu.se/tiles/imperium/{z}/{x}/{y}.png', {
+    'https://dh.gu.se/tiles/imperium/{z}/{x}/{y}.png', {
         maxZoom: 10,
-        attribution: 'Powered by <a href="http://leafletjs.com/">Leaflet</a>. Map base: <a href="http://dare.ht.lu.se/" title="Digital Atlas of the Roman Empire, Department of Archaeology and Ancient History, Lund University, Sweden">DARE</a>, 2015 (cc-by-sa).'
+        attribution: 'Powered by <a href="http://leafletjs.com/">Leaflet</a>. Map base: <a href="https://dh.gu.se/dare/" title="Digital Atlas of the Roman Empire, Department of Archaeology and Ancient History, Lund University, Sweden">DARE</a>, 2015 (cc-by-sa).'
     });
     var mb_physical = L.tileLayer(
-    'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=' + mapboxKey, {
+    'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
         '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-        'Imagery © <a href="http://mapbox.com">Mapbox</a>', id: 'mapbox.streets', maxZoom: 10
-    });
-    
-    //overlays
-    var heatmapLayer = new HeatmapOverlay({
-        "radius": .5,
-        "maxOpacity": .8,
-        "scaleRadius": true,
-        "useLocalExtrema": true,
-        latField: 'lat',
-        lngField: 'lng',
-        valueField: 'count'
+        'Imagery © <a href="http://mapbox.com">Mapbox</a>', id: 'mapbox/outdoors-v11', maxZoom: 12, accessToken: mapboxKey
     });
     
     var map = new L.Map('mapcontainer', {
@@ -53,18 +46,13 @@ function initialize_map(uri) {
     var hoardLayer = L.geoJson.ajax('http://nomisma.org/apis/getHoards?symbol=' + uri, {
         onEachFeature: onEachFeature,
         pointToLayer: renderPoints
-    });
+    }).addTo(map);
     
     //add individual finds layer, but don't make visible
     var findLayer = L.geoJson.ajax('http://nomisma.org/apis/getFindspots?symbol=' + uri, {
         onEachFeature: onEachFeature,
         pointToLayer: renderPoints
-    });
-    
-    //load heatmapLayer after JSON loading concludes
-    $.getJSON('http://nomisma.org/apis/heatmap?symbol=' + uri, function (data) {
-        heatmapLayer.setData(data);
-    });
+    }).addTo(map);
     
     //add controls
     var baseMaps = {
@@ -85,7 +73,7 @@ function initialize_map(uri) {
     }
     
     var overlayMaps = {
-        'Mints': mintLayer, 'Hoards': hoardLayer, 'Finds': findLayer, 'Heatmap': heatmapLayer
+        'Mints': mintLayer, 'Hoards': hoardLayer, 'Finds': findLayer
     };
     
     L.control.layers(baseMaps, overlayMaps).addTo(map);
@@ -150,6 +138,10 @@ function initialize_map(uri) {
                     str += '<b>Findspot: </b>';
                 }
                 str += '<a href="' + feature.properties.gazetteer_uri + '">' + feature.properties.toponym + '</a></span>'
+            }
+            if (feature.properties.hasOwnProperty('closing_date') == true) {
+                str += '<br/><span>';
+                str += '<b>Closing Date: </b>' + feature.properties.closing_date;
             }
         }
         layer.bindPopup(str);

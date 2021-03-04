@@ -21,12 +21,12 @@
 					</div>
 				</div>
 				<input name="q" id="q_input" type="hidden"/>
-				<xsl:if test="string($lang)">
-					<input name="lang" type="hidden" value="{$lang}"/>
+				<xsl:if test="string($langParam)">
+					<input name="lang" type="hidden" value="{$langParam}"/>
 				</xsl:if>
 				<xsl:choose>
 					<xsl:when test="$pipeline='analyze'">
-						<input type="submit" value="Filter" id="filterButton" class="btn btn-default"/>
+						<input type="submit" value="{numishare:normalizeLabel('visualize_filter_list', $lang)}" class="btn btn-default"/>
 					</xsl:when>
 					<xsl:when test="$pipeline='visualize'">
 						<input type="submit" value="{numishare:normalizeLabel('visualize_add_query', $lang)}" class="btn btn-default"/>
@@ -66,7 +66,7 @@
 				<xsl:when test="$collection_type='hoard'">
 					<xsl:text>fulltext,artist_facet,authority_facet,taq_num,coinType_facet,deity_facet,denomination_facet,dynasty_facet,issuer_facet,legend_text,obv_leg_text,rev_leg_text,maker_facet,manufacture_facet,material_facet,mint_facet,objectType_facet,tpq_num,portrait_facet,recordId,reference_text,region_facet,type_text,obv_type_text,rev_type_text,year_num</xsl:text>
 				</xsl:when>
-				<xsl:when test="$collection_type='cointype'">
+				<xsl:when test="$collection_type='cointype' or $collection_type = 'die'">
 					<xsl:text>fulltext,artist_facet,authority_facet,typeNumber,deity_facet,denomination_facet,dynasty_facet,issuer_facet,legend_text,obv_leg_text,rev_leg_text,maker_facet,manufacture_facet,material_facet,mint_facet,objectType_facet,portrait_facet,recordId,reference_text,region_facet,type_text,obv_type_text,rev_type_text,year_num</xsl:text>
 				</xsl:when>
 				<xsl:otherwise>
@@ -81,7 +81,7 @@
 			<xsl:choose>
 				<xsl:when test="contains($name, '_facet')">
 					<!-- display only those search options when their facet equivalent has hits -->
-					<xsl:if test="$facets//lst[@name=$name]">
+					<xsl:if test="$facets//lst[@name=$name] or boolean(index-of($facets, $name)) = true()">
 						<option value="{$name}" class="search_option">
 							<xsl:value-of select="numishare:normalize_fields($name, $lang)"/>
 						</option>

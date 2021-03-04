@@ -79,7 +79,7 @@
 				<xsl:if test="string(str[@name = 'thumbnail_obv'])">
 					<xsl:variable name="href">
 						<xsl:choose>
-							<xsl:when test="contains(str[@name = 'thumbnail_obv'], 'http://')">
+							<xsl:when test="matches(str[@name = 'thumbnail_obv'], '^https?://')">
 								<xsl:value-of select="str[@name = 'thumbnail_obv']"/>
 							</xsl:when>
 							<xsl:otherwise>
@@ -93,7 +93,7 @@
 				<xsl:if test="string(str[@name = 'reference_obv'])">
 					<xsl:variable name="href">
 						<xsl:choose>
-							<xsl:when test="contains(str[@name = 'reference_obv'], 'http://')">
+							<xsl:when test="matches(str[@name = 'reference_obv'], '^https?://')">
 								<xsl:value-of select="str[@name = 'reference_obv']"/>
 							</xsl:when>
 							<xsl:otherwise>
@@ -107,7 +107,7 @@
 				<xsl:if test="string(str[@name = 'thumbnail_rev'])">
 					<xsl:variable name="href">
 						<xsl:choose>
-							<xsl:when test="contains(str[@name = 'thumbnail_rev'], 'http://')">
+							<xsl:when test="matches(str[@name = 'thumbnail_rev'], '^https?://')">
 								<xsl:value-of select="str[@name = 'thumbnail_rev']"/>
 							</xsl:when>
 							<xsl:otherwise>
@@ -121,7 +121,7 @@
 				<xsl:if test="string(str[@name = 'reference_rev'])">
 					<xsl:variable name="href">
 						<xsl:choose>
-							<xsl:when test="contains(str[@name = 'reference_rev'], 'http://')">
+							<xsl:when test="matches(str[@name = 'reference_rev'], '^https?://')">
 								<xsl:value-of select="str[@name = 'reference_rev']"/>
 							</xsl:when>
 							<xsl:otherwise>
@@ -208,7 +208,9 @@
 					</xsl:when>
 					<xsl:otherwise>
 						<xsl:for-each select="arr[@name = 'coinType_uri']/str">
-							<nmo:hasTypeSeriesItem rdf:resource="{.}"/>
+							<xsl:if test="not(contains(., 'sc.2.'))">
+								<nmo:hasTypeSeriesItem rdf:resource="{.}"/>
+							</xsl:if>							
 						</xsl:for-each>
 					</xsl:otherwise>
 				</xsl:choose>
@@ -247,6 +249,13 @@
 				<nmo:hasFindspot rdf:resource="{$findspot[2]}"/>
 			</xsl:if>
 			<!-- images -->
+			<xsl:if test="string(str[@name = 'reference_com'])">
+				<foaf:depiction rdf:resource="{str[@name = 'reference_com']}"/>
+			</xsl:if>
+			<xsl:if test="string(str[@name = 'thumbnail_com'])">
+				<foaf:thumbnail rdf:resource="{str[@name = 'thumbnail_com']}"/>
+			</xsl:if>
+			
 			<!-- obverse -->
 			<xsl:if test="string(str[@name = 'reference_obv']) or string(str[@name = 'thumbnail_obv'])">
 				<nmo:hasObverse>
@@ -255,7 +264,7 @@
 						<xsl:if test="string(str[@name = 'reference_obv'])">
 							<xsl:variable name="href">
 								<xsl:choose>
-									<xsl:when test="contains(str[@name = 'reference_obv'], 'http://')">
+									<xsl:when test="matches(str[@name = 'reference_obv'], '^https?://')">
 										<xsl:value-of select="str[@name = 'reference_obv']"/>
 									</xsl:when>
 									<xsl:otherwise>
@@ -268,7 +277,7 @@
 						<xsl:if test="string(str[@name = 'thumbnail_obv'])">
 							<xsl:variable name="href">
 								<xsl:choose>
-									<xsl:when test="contains(str[@name = 'thumbnail_obv'], 'http://')">
+									<xsl:when test="matches(str[@name = 'thumbnail_obv'], '^https?://')">
 										<xsl:value-of select="str[@name = 'thumbnail_obv']"/>
 									</xsl:when>
 									<xsl:otherwise>
@@ -289,7 +298,7 @@
 						<xsl:if test="string(str[@name = 'reference_rev'])">
 							<xsl:variable name="href">
 								<xsl:choose>
-									<xsl:when test="contains(str[@name = 'reference_rev'], 'http://')">
+									<xsl:when test="matches(str[@name = 'reference_rev'], '^https?://')">
 										<xsl:value-of select="str[@name = 'reference_rev']"/>
 									</xsl:when>
 									<xsl:otherwise>
@@ -302,7 +311,7 @@
 						<xsl:if test="string(str[@name = 'thumbnail_rev'])">
 							<xsl:variable name="href">
 								<xsl:choose>
-									<xsl:when test="contains(str[@name = 'thumbnail_rev'], 'http://')">
+									<xsl:when test="matches(str[@name = 'thumbnail_rev'], '^https?://')">
 										<xsl:value-of select="str[@name = 'thumbnail_rev']"/>
 									</xsl:when>
 									<xsl:otherwise>
@@ -367,7 +376,7 @@
 		<xsl:param name="reference"/>
 		<xsl:param name="service"/>
 		
-		<edm:WebResource rdf:about="{if (contains($reference, 'http://')) then $reference else concat($url, $reference)}">
+		<edm:WebResource rdf:about="{if (matches($reference, '^https?://')) then $reference else concat($url, $reference)}">
 			<svcs:has_service rdf:resource="{$service}"/>
 			<dcterms:isReferencedBy rdf:resource="{$service}/info.json"/>
 		</edm:WebResource>

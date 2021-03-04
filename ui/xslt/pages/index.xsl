@@ -21,11 +21,11 @@
 	<!-- URI space for featured items -->	
 	<xsl:variable name="uri_space">
 		<xsl:choose>
-			<xsl:when test="//config/uri_space">
+			<xsl:when test="string(//config/uri_space)">
 				<xsl:value-of select="//config/uri_space"/>
 			</xsl:when>
 			<xsl:otherwise>
-				<xsl:value-of select="concat(//config/url, 'id/')"/>
+				<xsl:text>id/</xsl:text>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:variable>
@@ -38,16 +38,37 @@
 				</title>
 				<link rel="shortcut icon" type="image/x-icon" href="{$include_path}/images/favicon.png"/>
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
-				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
+				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"/>
+				
 				<!-- bootstrap -->
-				<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
-				<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
+				<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+				<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"/>
 				<link type="text/css" href="{$include_path}/css/style.css" rel="stylesheet"/>
+				
+				<xsl:for-each select="includes/include">
+					<xsl:choose>
+						<xsl:when test="@type = 'css'">
+							<link type="text/{@type}" rel="stylesheet" href="{@url}"/>
+						</xsl:when>
+						<xsl:when test="@type = 'javascript'">
+							<script type="text/{@type}" src="{@url}"/>
+						</xsl:when>
+					</xsl:choose>
+				</xsl:for-each>
+				
 				<xsl:if test="string(google_analytics)">
 					<script type="text/javascript">
 						<xsl:value-of select="google_analytics"/>
 					</script>
 				</xsl:if>
+				
+				<!-- open graph/twitter metadata -->
+				<meta property="og:url" content="{url}"/>
+				<meta property="og:type" content="article"/>
+				<meta property="og:title" content="{title}"/>
+				<meta property="twitter:url" content="{url}"/>
+				<meta property="twitter:title" content="{title}"/>
+				<meta name="twitter:card" content="summary_large_image"/>
 			</head>
 			<body>
 				<xsl:call-template name="header"/>
@@ -85,7 +106,7 @@
 			</div>
 		</div>	
 		<div class="container-fluid">
-			<xsl:if test="$lang='ar'">
+			<xsl:if test="//config/languages/language[@code = $lang]/@rtl = true()">
 				<xsl:attribute name="style">direction: rtl;</xsl:attribute>							
 			</xsl:if>
 			<div class="row">

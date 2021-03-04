@@ -1,15 +1,16 @@
 PREFIX nm:       <http://nomisma.org/id/>
 PREFIX nmo:	<http://nomisma.org/ontology#>
 PREFIX dcterms:  <http://purl.org/dc/terms/>
+PREFIX skos:      <http://www.w3.org/2004/02/skos/core#>
 PREFIX dcmitype:	<http://purl.org/dc/dcmitype/>
 
 ASK {
-  { ?object nmo:hasTypeSeriesItem <%URI%> ; 
-  	a nmo:NumismaticObject ; 
+  { ?object nmo:hasTypeSeriesItem|nmo:hasTypeSeriesItem/skos:exactMatch|nmo:hasTypeSeriesItem/skos:broader <%URI%> ; 
+  	a nmo:NumismaticObject ;
   	nmo:hasFindspot ?findspot }
-  UNION { ?object nmo:hasTypeSeriesItem <%URI%> ; 
-  	a nmo:NumismaticObject ; 
-  	dcterms:isPartOf ?hoard .
+  UNION { ?object nmo:hasTypeSeriesItem|nmo:hasTypeSeriesItem/skos:exactMatch|nmo:hasTypeSeriesItem/skos:broader+ <%URI%> ; 
+  	a nmo:NumismaticObject ;
+    dcterms:isPartOf ?hoard .
   	?hoard nmo:hasFindspot ?findspot }
   UNION { ?contents a dcmitype:Collection ; 
   	nmo:hasTypeSeriesItem <%URI%> .

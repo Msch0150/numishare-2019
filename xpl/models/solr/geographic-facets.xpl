@@ -30,7 +30,7 @@
 		<p:input name="config">
 			<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare">
 				<xsl:include href="../../../ui/xslt/functions.xsl"/>
-				<xsl:variable name="collection-name" select="substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
+				<xsl:variable name="collection-name" select="if (/config/union_type_catalog/@enabled = true()) then concat('(', string-join(/config/union_type_catalog/series/@collectionName, '+OR+'), ')')  					else substring-before(substring-after(doc('input:request')/request/request-uri, 'numishare/'), '/')"/>
 				<!-- url params -->
 				<xsl:param name="lang">
 					<xsl:choose>
@@ -48,7 +48,22 @@
 						</xsl:when>
 					</xsl:choose>
 				</xsl:param>
-				<xsl:param name="q" select="doc('input:request')/request/parameters/parameter[name='q']/value"/>
+				
+				<xsl:param name="department" select="doc('input:request')/request/parameters/parameter[name='department']/value"/>
+				<xsl:param name="q">
+					<xsl:choose>
+						<xsl:when test="string($department)">
+							<xsl:value-of select="concat('department_facet:&#x022;', $department, '&#x022;')"/>
+							<xsl:if test="string(doc('input:request')/request/parameters/parameter[name='q']/value)">
+								<xsl:text> AND </xsl:text>
+								<xsl:value-of select="doc('input:request')/request/parameters/parameter[name='q']/value"/>
+							</xsl:if>						
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="doc('input:request')/request/parameters/parameter[name='q']/value"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:param>
 				<xsl:param name="rows">0</xsl:param>
 				
 				<!-- facet variable -->

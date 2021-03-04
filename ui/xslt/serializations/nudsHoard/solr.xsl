@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Author: Ethan Gruber
+	Modified: April 2020
+	Function: This stylesheet transforms a nudsHoard XML document into Solr
+-->
 <xsl:stylesheet version="2.0" xmlns:nh="http://nomisma.org/nudsHoard" xmlns:nuds="http://nomisma.org/nuds" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:datetime="http://exslt.org/dates-and-times" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	xmlns:math="http://exslt.org/math" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
-	xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:numishare="https://github.com/ewg118/numishare" exclude-result-prefixes="#all">
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml"
+	xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:numishare="https://github.com/ewg118/numishare" exclude-result-prefixes="#all">
 	<xsl:output method="xml" encoding="UTF-8"/>
 
 	<xsl:template name="nudsHoard">
@@ -73,7 +77,7 @@
 			</field>
 
 			<!-- closing date, derive from deposit first -->
-			<xsl:if test="not(descendant::nh:deposit[nh:date or nh:dateRange])">
+			<xsl:if test="not(descendant::nh:deposit[nh:date or nh:dateRange]) and not(descendant::nh:closingDate[nh:date or nh:dateRange])">
 				<xsl:if test="$hasContents = true()">
 
 					<!-- derive dates from contents if the nh:deposit is not set -->
@@ -136,23 +140,12 @@
 
 			<field name="timestamp">
 				<xsl:choose>
-					<xsl:when test="string(descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime)">
-						<xsl:choose>
-							<xsl:when test="contains(descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime, 'Z')">
-								<xsl:value-of select="descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime"/>
-							</xsl:when>
-							<xsl:otherwise>
-								<xsl:value-of select="concat(descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime, 'Z')"/>
-							</xsl:otherwise>
-						</xsl:choose>
+					<xsl:when test="descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime castable as xs:dateTime">
+						<xsl:value-of select="format-dateTime(xs:dateTime(descendant::*:maintenanceEvent[last()]/*:eventDateTime/@standardDateTime), '[Y0001]-[M01]-[D01]T[h01]:[m01]:[s01]Z')"/>
 					</xsl:when>
 					<xsl:otherwise>
 						<xsl:value-of
-							select="
-								if (contains(datetime:dateTime(), 'Z')) then
-									datetime:dateTime()
-								else
-									concat(datetime:dateTime(), 'Z')"
+							select="format-dateTime(current-dateTime(), '[Y0001]-[M01]-[D01]T[h01]:[m01]:[s01]Z')"/>
 						/>
 					</xsl:otherwise>
 				</xsl:choose>
@@ -208,20 +201,72 @@
 
 	<xsl:template match="nh:descMeta">
 		<xsl:param name="lang"/>
-		<xsl:apply-templates select="nh:hoardDesc"/>
+
+		<xsl:apply-templates select="nh:hoardDesc">
+			<xsl:with-param name="lang" select="$lang"/>
+		</xsl:apply-templates>
 		<xsl:apply-templates select="nh:refDesc"/>
 		<xsl:apply-templates select="nh:contentsDesc">
 			<xsl:with-param name="lang" select="$lang"/>
 		</xsl:apply-templates>
+		
+		<xsl:apply-templates select="nh:subjectSet"/>
 	</xsl:template>
 
 	<xsl:template match="nh:hoardDesc">
-		<xsl:apply-templates select="nh:findspot/nh:geogname[@xlink:role = 'findspot']"/>
-		<xsl:apply-templates select="nh:deposit[nh:date or nh:dateRange] | nh:discovery[nh:date or nh:dateRange]"/>
+		<xsl:param name="lang"/>
+
+		<xsl:apply-templates select="nh:findspot">
+			<xsl:with-param name="lang" select="$lang"/>
+		</xsl:apply-templates>
+
+		<xsl:apply-templates select="nh:deposit[nh:date or nh:dateRange] | nh:discovery[nh:date or nh:dateRange] | nh:closingDate[nh:date or nh:dateRange]"/>
 	</xsl:template>
 
-	<xsl:template match="nh:deposit | nh:discovery">
-		<xsl:variable name="type" select="local-name()"/>
+	<xsl:template match="nh:findspot">
+		<xsl:param name="lang"/>
+
+		<xsl:if test="nh:description">
+			<field name="findspot_display">
+				<xsl:value-of select="numishare:display-description(self::node(), $lang)"/>
+			</field>
+			<field name="findspot_text">
+				<xsl:value-of select="numishare:display-description(self::node(), $lang)"/>
+			</field>
+		</xsl:if>
+
+		<xsl:choose>
+			<xsl:when test="gml:location">
+				<!-- use localized (non-gazetteer) findspots later -->
+			</xsl:when>
+			<xsl:when test="nh:fallsWithin">
+				<xsl:apply-templates select="nh:fallsWithin"/>
+			</xsl:when>
+		</xsl:choose>
+	</xsl:template>
+	
+	<xsl:template match="nh:fallsWithin">
+		<xsl:apply-templates select="nh:geogname[@xlink:href]|nh:type"/>
+	</xsl:template>
+
+	<!-- place feature type -->
+	<xsl:template match="nh:type">
+		<field name="findspot_type_text">
+			<xsl:value-of select="."/>
+		</field>
+		<field name="findspot_type_facet">
+			<xsl:value-of select="."/>
+		</field>
+		
+		<xsl:if test="@xlink:href">
+			<field name="findspot_type_uri">
+				<xsl:value-of select="@xlink:href"/>
+			</field>
+		</xsl:if>
+	</xsl:template>
+
+	<xsl:template match="nh:deposit | nh:discovery | nh:closingDate">
+		<xsl:variable name="type" select="if (local-name() = 'closingDate') then 'closing_date' else local-name()"/>
 
 		<field name="{$type}_display">
 			<xsl:choose>
@@ -240,7 +285,7 @@
 			<xsl:when test="nh:date">
 				<xsl:choose>
 					<xsl:when test="nh:date/@notAfter">
-						<xsl:if test="self::nh:deposit">
+						<xsl:if test="self::nh:deposit or self::nh:closingDate">
 							<field name="taq_num">
 								<xsl:value-of select="number(nh:date/@notAfter)"/>
 							</field>
@@ -250,7 +295,7 @@
 						</field>
 					</xsl:when>
 					<xsl:when test="nh:date/@standardDate">
-						<xsl:if test="self::nh:deposit">
+						<xsl:if test="self::nh:deposit or self::nh:closingDate">
 							<field name="taq_num">
 								<xsl:value-of select="number(nh:date/@standardDate)"/>
 							</field>
@@ -265,7 +310,7 @@
 				</xsl:choose>
 			</xsl:when>
 			<xsl:otherwise>
-				<xsl:if test="self::nh:deposit">
+				<xsl:if test="self::nh:deposit or self::nh:closingDate">
 					<field name="taq_num">
 						<xsl:value-of select="number(nh:dateRange/nh:toDate/@standardDate)"/>
 					</field>
@@ -289,7 +334,7 @@
 
 	<xsl:template match="nh:contents">
 		<xsl:param name="lang"/>
-		
+
 		<field name="description_display">
 			<xsl:choose>
 				<xsl:when test="@count or @minCount or @maxCount">

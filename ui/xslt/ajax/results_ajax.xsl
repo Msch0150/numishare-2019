@@ -3,26 +3,23 @@
 	xmlns:res="http://www.w3.org/2005/sparql-results#" exclude-result-prefixes="#all" version="2.0">
 	<xsl:include href="../functions.xsl"/>
 	<xsl:include href="../serializations/solr/html-templates.xsl"/>
+	<xsl:include href="numishareResults.xsl"/>
 
 	<!-- params -->
 	<xsl:param name="pipeline" select="doc('input:request')/request/parameters/parameter[name='pipeline']/value"/>
+	<xsl:param name="langParam" select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
 	<xsl:param name="lang">
 		<xsl:choose>
-			<xsl:when test="string(doc('input:request')/request/parameters/parameter[name='lang']/value)">
-				<xsl:if test="//config/languages/language[@code=doc('input:request')/request/parameters/parameter[name='lang']/value][@enabled=true()]">
-					<xsl:value-of select="doc('input:request')/request/parameters/parameter[name='lang']/value"/>
-				</xsl:if>
+			<xsl:when test="string($langParam)">
+				<xsl:value-of select="$langParam"/>
 			</xsl:when>
 			<xsl:when test="string(doc('input:request')/request//header[name[.='accept-language']]/value)">
-				<xsl:variable name="primaryLang" select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
-				
-				<xsl:if test="//config/languages/language[@code=$primaryLang][@enabled=true()]">
-					<xsl:value-of select="$primaryLang"/>
-				</xsl:if>
+				<xsl:value-of select="numishare:parseAcceptLanguage(doc('input:request')/request//header[name[.='accept-language']]/value)[1]"/>
 			</xsl:when>
 		</xsl:choose>
 	</xsl:param>
-	<xsl:param name="request-uri" select="concat('http://localhost:8080', substring-before(doc('input:request')/request/request-uri, 'results_ajax'))"/>
+	<xsl:param name="layout" select="doc('input:request')/request/parameters/parameter[name='layout']/value"/>
+	<xsl:param name="request-uri" select="concat('http://localhost:', if (//config/server-port castable as xs:integer) then //config/server-port else '8080', substring-before(doc('input:request')/request/request-uri, 'results_ajax'))"/>
 	<xsl:variable name="authenticated" select="false()" as="xs:boolean"/>
 
 	<xsl:variable name="display_path">
@@ -30,6 +27,20 @@
 			<xsl:when test="$pipeline='maps'"/>
 			<xsl:when test="$pipeline='maps_fullscreen'">../</xsl:when>
 			<xsl:otherwise/>
+		</xsl:choose>
+	</xsl:variable>
+	
+	<xsl:variable name="object-path">
+		<xsl:choose>
+			<xsl:when test="//config/collection_type = 'object' and string(//config/uri_space)">
+				<xsl:value-of select="//config/uri_space"/>
+			</xsl:when>
+			<xsl:when test="//config/union_type_catalog/@enabled = true()">
+				<xsl:value-of select="str[@name='uri_space']"/>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:value-of select="concat($display_path, 'id/')"/>
+			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:variable>
 
@@ -51,19 +62,9 @@
 	<xsl:variable name="tokenized_q" select="tokenize($q, ' AND ')"/>
 	<xsl:variable name="numFound" select="//result[@name='response']/@numFound" as="xs:integer"/>
 
-	<!-- config variables -->
-	<xsl:variable name="sparql_endpoint" select="/content/config/sparql_endpoint"/>
+	<!-- config variables -->	
 	<xsl:variable name="url" select="/content/config/url"/>
-
-	<!-- get block of images from SPARQL endpoint, via nomisma API -->
-	<xsl:variable name="sparqlResult" as="element()*">
-		<xsl:if test="string($sparql_endpoint) and //config/collection_type='cointype'">
-			<xsl:variable name="service" select="concat('http://nomisma.org/apis/numishareResults?identifiers=', encode-for-uri(string-join(descendant::str[@name='recordId'], '|')), '&amp;baseUri=',
-				encode-for-uri(/content/config/uri_space))"/>
-			<xsl:copy-of select="document($service)/response"/>
-		</xsl:if>
-	</xsl:variable>
-
+	
 	<xsl:template match="/">
 		<xsl:variable name="facets" as="element()*">
 			<xsl:copy-of select="descendant::lst[@name='facet_fields']"/>
@@ -109,34 +110,54 @@
 
 		<div class="g_doc col-md-4">
 			<h4>
-				<xsl:if test="$lang='ar'">
+				<xsl:if test="//config/languages/language[@code = $lang]/@rtl = true()">
 					<xsl:attribute name="style">direction: ltr; text-align:right</xsl:attribute>
 				</xsl:if>
-				<a href="{$display_path}id/{str[@name='recordId']}{if (string($langParam)) then concat('?lang=', $langParam) else ''}" target="_blank">
+				<a href="{$object-path}{str[@name='recordId']}{if (string($langParam)) then concat('?lang=', $langParam) else ''}" target="_blank">
 					<xsl:value-of select="str[@name='title_display']"/>
 				</a>
 			</h4>
-			<dl class=" {if($lang='ar') then 'dl-horizontal ar' else 'dl-horizontal'}">
+			<dl class="{if(//config/languages/language[@code = $lang]/@rtl = true()) then 'dl-horizontal dl-rtl' else 'dl-horizontal'}">
 				<xsl:choose>
 					<xsl:when test="str[@name='recordType'] = 'hoard'">
-						<dt>							
-							<xsl:value-of select="numishare:regularize_node('findspot', $lang)"/>
-						</dt>
-						<dd>							
-							<xsl:value-of select="arr[@name='findspot_facet']/str[1]"/>
-						</dd>
-						<dt>							
-							<xsl:value-of select="numishare:regularize_node('closing_date', $lang)"/>
-						</dt>
-						<dd>							
-							<xsl:value-of select="str[@name='closing_date_display']"/>
-						</dd>
-						<xsl:if test="string(str[@name='description_display'])">
-							<dt>								
+						<xsl:if test="string(str[@name = 'findspot_display'])">
+							<dt>
+								<xsl:value-of select="numishare:regularize_node('findspot', $lang)"/>
+							</dt>
+							<dd>
+								<xsl:value-of select="str[@name = 'findspot_display']"/>
+							</dd>
+						</xsl:if>
+						<xsl:if test="str[@name = 'closing_date_display']">
+							<dt>
+								<xsl:value-of select="numishare:regularize_node('closing_date', $lang)"/>
+							</dt>
+							<dd>
+								<xsl:value-of select="str[@name = 'closing_date_display']"/>
+							</dd>
+						</xsl:if>
+						<xsl:if test="str[@name = 'deposit_display']">
+							<dt>
+								<xsl:value-of select="numishare:regularize_node('deposit', $lang)"/>
+							</dt>
+							<dd>
+								<xsl:value-of select="str[@name = 'deposit_display']"/>
+							</dd>
+						</xsl:if>
+						<xsl:if test="str[@name = 'discovery_display']">
+							<dt>
+								<xsl:value-of select="numishare:regularize_node('discovery', $lang)"/>
+							</dt>
+							<dd>
+								<xsl:value-of select="str[@name = 'discovery_display']"/>
+							</dd>
+						</xsl:if>
+						<xsl:if test="string(str[@name = 'description_display'])">
+							<dt>
 								<xsl:value-of select="numishare:regularize_node('description', $lang)"/>
 							</dt>
-							<dd>								
-								<xsl:value-of select="str[@name='description_display']"/>
+							<dd>
+								<xsl:value-of select="str[@name = 'description_display']"/>
 							</dd>
 						</xsl:if>
 					</xsl:when>
@@ -183,7 +204,10 @@
 								<xsl:value-of select="if (string-length(str[@name='obv_leg_display']) &gt; 30) then concat(substring(str[@name='obv_leg_display'], 1, 30), '...') else
 									str[@name='obv_leg_display']"/>
 								<xsl:if test="str[@name='obv_leg_display'] and str[@name='obv_type_display']">
-									<xsl:text>: </xsl:text>
+									<xsl:choose>
+										<xsl:when test="$lang = 'de'">; </xsl:when>
+										<xsl:otherwise>: </xsl:otherwise>
+									</xsl:choose>
 								</xsl:if>
 								<xsl:value-of select="if (string-length(str[@name='obv_type_display']) &gt; 30) then concat(substring(str[@name='obv_type_display'], 1, 30), '...') else
 									str[@name='obv_type_display']"/>
@@ -197,7 +221,10 @@
 								<xsl:value-of select="if (string-length(str[@name='rev_leg_display']) &gt; 30) then concat(substring(str[@name='rev_leg_display'], 1, 30), '...') else
 									str[@name='rev_leg_display']"/>
 								<xsl:if test="str[@name='rev_leg_display'] and str[@name='rev_type_display']">
-									<xsl:text>: </xsl:text>
+									<xsl:choose>
+										<xsl:when test="$lang = 'de'">; </xsl:when>
+										<xsl:otherwise>: </xsl:otherwise>
+									</xsl:choose>
 								</xsl:if>
 								<xsl:value-of select="if (string-length(str[@name='rev_type_display']) &gt; 30) then concat(substring(str[@name='rev_type_display'], 1, 30), '...') else
 									str[@name='rev_type_display']"/>
@@ -211,35 +238,21 @@
 				<xsl:choose>
 					<xsl:when test="str[@name='recordType'] = 'physical'">
 						<xsl:if test="string(str[@name='thumbnail_obv'])">
-							<xsl:variable name="path">
-								<xsl:if test="not(contains(str[@name='thumbnail_obv'], 'http://'))">
-									<xsl:value-of select="$display_path"/>
-								</xsl:if>
-							</xsl:variable>
-
-							<a class="thumbImage" href="{$path}{str[@name='reference_obv']}" title="Obverse of {str[@name='title_display']}" id="{$display_path}id/{str[@name='recordId']}{if
+							<a class="thumbImage" href="{str[@name='reference_obv']}" title="Obverse of {str[@name='title_display']}" id="{$object-path}{str[@name='recordId']}{if
 								(string($langParam))         then concat('?lang=', $langParam) else ''}">
-								<img src="{$path}{str[@name='thumbnail_obv']}" class="side-thumbnail"/>
+								<img src="{str[@name='thumbnail_obv']}" class="side-thumbnail"/>
 							</a>
 						</xsl:if>
 						<xsl:if test="string(str[@name='thumbnail_rev'])">
-							<xsl:variable name="path">
-								<xsl:if test="not(contains(str[@name='thumbnail_rev'], 'http://'))">
-									<xsl:value-of select="$display_path"/>
-								</xsl:if>
-							</xsl:variable>
-
-							<a class="thumbImage" href="{$path}{str[@name='reference_rev']}" title="Reverse of {str[@name='title_display']}" id="{$display_path}id/{str[@name='recordId']}{if
+							<a class="thumbImage" href="{str[@name='reference_rev']}" title="Reverse of {str[@name='title_display']}" id="{$object-path}{str[@name='recordId']}{if
 								(string($langParam))         then concat('?lang=', $langParam) else ''}">
-								<img src="{$path}{str[@name='thumbnail_rev']}" class="side-thumbnail"/>
+								<img src="{str[@name='thumbnail_rev']}" class="side-thumbnail"/>
 							</a>
 						</xsl:if>
 					</xsl:when>
-					<xsl:when test="str[@name='recordType'] = 'conceptual'">
-						<xsl:if test="string($sparql_endpoint)">
-							<xsl:variable name="id" select="str[@name='recordId']"/>
-							<xsl:apply-templates select="$sparqlResult//group[@id=$id]" mode="results"/>
-						</xsl:if>
+					<xsl:when test="str[@name='recordType'] = 'conceptual' and matches(/content/config/sparql_endpoint, '^https?://')">
+						<xsl:variable name="id" select="str[@name='recordId']"/>
+						<xsl:apply-templates select="doc('input:numishareResults')//group[@id=$id]" mode="results"/>
 					</xsl:when>
 				</xsl:choose>
 			</div>

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	XPL handling SPARQL queries from Fuseki	
+	Author: Ethan Gruber
+	Date Modified: July 2018
+	Function: Get the count of physical specimens associated with the coin type URI. This count is used to set $hasTypes and for pagination
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors">
 
@@ -37,8 +39,19 @@ PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
 PREFIX void:	<http://rdfs.org/ns/void#>
 PREFIX geo:	<http://www.w3.org/2003/01/geo/wgs84_pos#>
 
-ASK {
-  ?coin nmo:hasTypeSeriesItem <typeURI>
+SELECT (count(?coin) as ?count) WHERE {
+{ ?coin a nmo:NumismaticObject ;
+ nmo:hasTypeSeriesItem <typeURI>}
+UNION { <typeURI> skos:exactMatch ?match .
+?object nmo:hasTypeSeriesItem ?match ;
+  a nmo:NumismaticObject }
+UNION { ?broader skos:broader+ <typeURI> .
+?coin nmo:hasTypeSeriesItem ?broader ;
+  a nmo:NumismaticObject }
+UNION { ?broader skos:broader+ <typeURI> .
+?broader skos:exactMatch ?match .
+?object nmo:hasTypeSeriesItem ?match ;
+  a nmo:NumismaticObject }
 }]]></xsl:variable>
 
 				<xsl:variable name="service">

@@ -1,0 +1,42 @@
+PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dcterms:  <http://purl.org/dc/terms/>
+PREFIX nm:       <http://nomisma.org/id/>
+PREFIX nmo:	<http://nomisma.org/ontology#>
+PREFIX skos:      <http://www.w3.org/2004/02/skos/core#>
+PREFIX foaf:	<http://xmlns.com/foaf/0.1/>
+PREFIX rdfs:	<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX void:	<http://rdfs.org/ns/void#>
+PREFIX geo:	<http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX edm: <http://www.europeana.eu/schemas/edm/>
+
+SELECT DISTINCT ?object ?title ?identifier ?collection ?publisher ?dataset ?datasetTitle ?obvThumb ?revThumb ?obvRef ?revRef ?comThumb ?comRef ?obvManifest ?revManifest ?comManifest (GROUP_CONCAT(DISTINCT ?type ; separator='|') AS ?types) (GROUP_CONCAT(DISTINCT ?typeTitle ; separator='|') AS ?typeTitles) (GROUP_CONCAT(DISTINCT ?mint ; separator='|') AS ?mints) (GROUP_CONCAT(DISTINCT ?denomination ; separator='|') AS ?denominations) (GROUP_CONCAT(DISTINCT ?authority ; separator='|') AS ?authorities) WHERE {
+{ ?object a nmo:NumismaticObject ;
+ dcterms:isPartOf <hoardURI>}
+UNION { <http://coinhoards.org/id/igch1764> skos:exactMatch ?match .
+?object dcterms:isPartOf ?match ;
+  a nmo:NumismaticObject }
+?object dcterms:title ?title .
+OPTIONAL { ?object dcterms:identifier ?identifier}
+OPTIONAL { ?object nmo:hasCollection/skos:prefLabel ?collection FILTER(langMatches(lang(?collection), "en"))}
+OPTIONAL { ?object nmo:hasTypeSeriesItem ?type .
+?type skos:prefLabel ?typeTitle FILTER(langMatches(lang(?typeTitle), "en")) 
+    OPTIONAL {?type nmo:hasDenomination/skos:prefLabel ?denomination FILTER(langMatches(lang(?denomination), "en"))}
+    OPTIONAL {?type nmo:hasMint/skos:prefLabel ?mint FILTER(langMatches(lang(?mint), "en"))}
+    OPTIONAL {?type nmo:hasAuthority/skos:prefLabel ?authority FILTER(langMatches(lang(?authority), "en"))}
+}
+OPTIONAL {?object nmo:hasDenomination/skos:prefLabel ?denomination FILTER(langMatches(lang(?denomination), "en"))}
+OPTIONAL {?object nmo:hasMint/skos:prefLabel ?mint FILTER(langMatches(lang(?mint), "en"))}
+OPTIONAL {?object nmo:hasAuthority/skos:prefLabel ?authority FILTER(langMatches(lang(?authority), "en"))}
+?object void:inDataset ?dataset .
+?dataset dcterms:publisher ?publisher FILTER (lang(?publisher) = "" || langMatches(lang(?publisher), "en")) .
+?dataset dcterms:title ?datasetTitle FILTER (lang(?datasetTitle) = "" || langMatches(lang(?datasetTitle), "en")) .
+OPTIONAL { ?object foaf:thumbnail ?comThumb }
+OPTIONAL { ?object foaf:depiction ?comRef 
+	OPTIONAL { ?comRef dcterms:isReferencedBy ?comManifest }}
+OPTIONAL { ?object nmo:hasObverse/foaf:thumbnail ?obvThumb }
+OPTIONAL { ?object nmo:hasObverse/foaf:depiction ?obvRef
+	OPTIONAL { ?obvRef dcterms:isReferencedBy ?obvManifest }}
+OPTIONAL { ?object nmo:hasReverse/foaf:thumbnail ?revThumb }
+OPTIONAL { ?object nmo:hasReverse/foaf:depiction ?revRef 
+	OPTIONAL { ?revRef dcterms:isReferencedBy ?revManifest }}
+} GROUP BY ?object ?title ?identifier ?collection ?publisher ?dataset ?datasetTitle ?obvThumb ?revThumb ?obvRef ?revRef ?comThumb ?comRef ?obvManifest ?revManifest ?comManifest ?types ?typeTitles ?mints ?denominations ?authorities ORDER BY ASC(?publisher) ASC(?collection)

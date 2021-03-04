@@ -1,6 +1,6 @@
 <!-- 	author: Ethan Gruber, American Numismatic Society 
-	last modified: August, 2011
-	Function: Input modern descriptions in contexts other than typology.  Use orbeon descriptionpicker for exact descriptions.
+	last modified: February, 2019
+	Function: Generic nuds:description input. Deleting the final description will delete an empty parent.
 -->
 <xbl:xbl xmlns="http://www.w3.org/1999/xhtml" xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xxforms="http://orbeon.org/oxf/xml/xforms"
 	xmlns:fr="http://orbeon.org/oxf/xml/form-runner" xmlns:xbl="http://www.w3.org/ns/xbl" xmlns:xxbl="http://orbeon.org/oxf/xml/xbl" xmlns:oxf="http://www.orbeon.com/oxf/processors"
@@ -13,31 +13,34 @@
 					<xforms:var name="binding" as="node()?">
 						<xxforms:sequence select="." xxbl:scope="outer"/>
 					</xforms:var>
-					<div>
-						<xforms:textarea ref="$binding">
-							<xforms:label>Description</xforms:label>
-							<xforms:alert>Content Required</xforms:alert>
-						</xforms:textarea>
-						<xforms:select1 ref="$binding/@xml:lang">
-							<xforms:alert>Required</xforms:alert>
-							<xforms:item>
-								<xforms:label>Select...</xforms:label>
-								<xforms:value/>
-							</xforms:item>
-							<xforms:itemset nodeset="instance('languages')/language">
-								<xforms:label ref="."/>
-								<xforms:value ref="@value"/>
-							</xforms:itemset>
-						</xforms:select1>
-						<xforms:group ref="$binding[not(parent::nuds:mark)]">
+					
+					<xforms:group ref="$binding">
+						<div>
+							<xforms:textarea ref=".">
+								<xforms:label>Description</xforms:label>
+								<xforms:alert>Content Required</xforms:alert>
+							</xforms:textarea>
+							<xforms:select1 ref="@xml:lang">
+								<xforms:alert>Required</xforms:alert>
+								<xforms:item>
+									<xforms:label>Select...</xforms:label>
+									<xforms:value/>
+								</xforms:item>
+								<xforms:itemset nodeset="instance('languages')/language">
+									<xforms:label ref="."/>
+									<xforms:value ref="@value"/>
+								</xforms:itemset>
+							</xforms:select1>
 							<xforms:trigger appearance="minimal">
-								<xforms:delete ev:event="DOMActivate" nodeset="$binding"/>
-								<xforms:label>
-									<span class="glyphicon glyphicon-remove"/>
-								</xforms:label>
+								<xforms:label><span class="glyphicon glyphicon-remove"/></xforms:label>
+								<xforms:action ev:event="DOMActivate">										
+									<xforms:delete nodeset="."/>
+									<xforms:delete nodeset="parent::node()" if="count(parent::node()/*) = 0"/>	
+								</xforms:action>
 							</xforms:trigger>
-						</xforms:group>
-					</div>
+						</div>
+					</xforms:group>
+					
 					
 					<!-- ***********************  MODEL *********************** -->
 					<xforms:model id="description-model" xmlns:xi="http://www.w3.org/2001/XInclude">

@@ -20,7 +20,6 @@
 .alert-box {
 	width:50%;
 	margin:20px auto;
-	border-radius: 4px;
 }
 .highlight{
 	background-color:#F8F8F8;
@@ -71,12 +70,13 @@
 .xforms-output {
 	margin:0;
 }
-.xforms-output-output {
-	padding:0;
-	line-height:inherit;
+.orbeon .xforms-output output[role=textbox] {
 	display:inline;
 	font-size:inherit;
-	color:black
+	border:none;
+	background-color:inherit;
+	cursor:default;
+	white-space:normal;
 }
 .xforms-trigger {
 	text-decoration:none;
@@ -89,6 +89,9 @@
 }
 .xxforms-dialog-body>a, .xxforms-dialog-body>span {
 	width:100px;
+}
+#simple-captcha input {
+    width:10em;
 }
 .xbl-component {
 	margin:5px 0;

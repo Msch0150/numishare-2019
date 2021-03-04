@@ -2,14 +2,15 @@
 <!--***************************************** SHARED TEMPLATES AND FUNCTIONS *****************************************
 	Author: Ethan Gruber
 	Function: this XSLT stylesheet is included into display.xsl.  It contains shared templates and functions that may be used in object-
-	specific stylesheets
-	Modification date: Febrary 2012
+	specific stylesheets. Includes templates for bibliographies in MODS and TEI/EpiDoc extensions
+	Modification date: 2018
 -->
 <xsl:stylesheet xmlns:nuds="http://nomisma.org/nuds" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
 	xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:nm="http://nomisma.org/id/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:mets="http://www.loc.gov/METS/"
-	xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:tei="http://www.tei-c.org/ns/1.0"
-	exclude-result-prefixes="#all" version="2.0">
+	xmlns:gml="http://www.opengis.net/gml" xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:mods="http://www.loc.gov/mods/v3"
+	xmlns:org="http://www.w3.org/ns/org#" xmlns:nmo="http://nomisma.org/ontology#" xmlns:crm="http://www.cidoc-crm.org/cidoc-crm/"
+	xmlns:crmdig="http://www.ics.forth.gr/isl/CRMdig/" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="#all" version="2.0">
 	<!--***************************************** ELEMENT TEMPLATES **************************************** -->
 	<xsl:template match="*[local-name() = 'refDesc']">
 		<div class="metadata_section">
@@ -17,8 +18,10 @@
 				<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
 			</xsl:element>
 			<ul>
-				<xsl:apply-templates select="*:reference[not(child::*[local-name() = 'objectXMLWrap']) and not(child::tei:*)] | *:citation" mode="descMeta"/>
-				<xsl:apply-templates select="*:reference/*[local-name() = 'objectXMLWrap'] | *:reference[child::tei:*]"/>
+				<xsl:apply-templates
+					select="*:reference[not(child::*[local-name() = 'objectXMLWrap']) and not(child::tei:*)] | *:citation[not(child::*[local-name() = 'objectXMLWrap']) and not(child::tei:*)]"
+					mode="descMeta"/>
+				<xsl:apply-templates select="*:reference/*[local-name() = 'objectXMLWrap'] | *:reference[child::tei:*] | *:citation[child::tei:*]"/>
 			</ul>
 		</div>
 	</xsl:template>
@@ -59,37 +62,53 @@
 
 	<!-- handle type descriptions in various languages -->
 	<xsl:template match="nuds:type" mode="descMeta">
-		<xsl:choose>
-			<xsl:when test="nuds:description[@xml:lang = $lang]">
-				<li>
-					<b>
-						<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
-						<xsl:text>: </xsl:text>
-					</b>
+		<li>
+			<b>
+				<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
+				<xsl:text>: </xsl:text>
+			</b>
+			<xsl:choose>
+				<xsl:when test="nuds:description[@xml:lang = $lang]">
 					<xsl:value-of select="nuds:description[@xml:lang = $lang]"/>
-				</li>
-			</xsl:when>
-			<xsl:otherwise>
-				<li>
-					<b>
-						<xsl:value-of select="numishare:regularize_node(local-name(), 'en')"/>
-						<xsl:text>: </xsl:text>
-					</b>
-					<xsl:value-of select="nuds:description[@xml:lang = 'en']"/>
-				</li>
-			</xsl:otherwise>
-		</xsl:choose>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:choose>
+						<xsl:when test="nuds:description[@xml:lang = 'en']">
+							<xsl:value-of select="nuds:description[@xml:lang = 'en']"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="nuds:description[1]"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:otherwise>
+			</xsl:choose>
+		</li>
+	</xsl:template>
+
+	<xsl:template match="*:dateRange" mode="descMeta">
+		<li>
+			<b>
+				<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
+				<xsl:text>: </xsl:text>
+			</b>
+
+			<xsl:value-of select="concat(nuds:fromDate, ' - ', nuds:toDate)"/>
+		</li>
 	</xsl:template>
 
 	<xsl:template match="*" mode="descMeta">
 		<xsl:choose>
-			<xsl:when test="not(child::*) and (string(.) or string(@xlink:href))">
+			<!-- always process symbol here -->
+			<xsl:when test="(not(child::*) and (string(.) or string(@xlink:href))) or self::nuds:symbol">
 				<xsl:variable name="href" select="@xlink:href"/>
 				<!-- the facet field is the @xlink:role if it exists, otherwise it is the name of the nuds element -->
 				<xsl:variable name="field">
 					<xsl:choose>
 						<xsl:when test="string(@xlink:role)">
 							<xsl:value-of select="@xlink:role"/>
+						</xsl:when>
+						<xsl:when test="string(@localType)">
+							<xsl:value-of select="@localType"/>
 						</xsl:when>
 						<xsl:otherwise>
 							<xsl:value-of select="local-name()"/>
@@ -98,7 +117,6 @@
 				</xsl:variable>
 
 				<li>
-					<!-- display label first for non-Arabic languages -->
 					<b>
 						<xsl:choose>
 							<xsl:when test="string(@localType)">
@@ -122,6 +140,24 @@
 							</xsl:otherwise>
 						</xsl:choose>
 
+						<!-- insert position under bold heading -->
+						<xsl:if test="string(@position)">
+							<xsl:variable name="langParam" select="
+									if (string($lang)) then
+										$lang
+									else
+										'en'"/>
+							<xsl:variable name="position" select="@position"/>
+							<xsl:choose>
+								<xsl:when test="$positions//position[@value = $position]/label[@lang = $langParam]">
+									<i> (<xsl:value-of select="$positions//position[@value = $position]/label[@lang = $langParam]"/>)</i>
+								</xsl:when>
+								<xsl:otherwise>
+									<i> (<xsl:value-of select="concat(upper-case(substring(@position, 1, 1)), substring(@position, 2))"/>)</i>
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:if>
+
 						<xsl:text>: </xsl:text>
 					</b>
 					<!-- create link from facet, if applicable -->
@@ -130,6 +166,20 @@
 						<xsl:choose>
 							<xsl:when test="string($lang) and contains($href, 'nomisma.org')">
 								<xsl:value-of select="numishare:getNomismaLabel($rdf/*[@rdf:about = $href], $lang)"/>
+							</xsl:when>
+							<xsl:when test="self::*:reference and string(@xlink:href) and @xlink:arcrole = 'nmo:hasTypeSeriesItem'">
+								<!-- extract the title from $nudsGroup -->
+								<xsl:variable name="uri" select="@xlink:href"/>
+
+								<xsl:choose>
+									<xsl:when test="$nudsGroup//object[@xlink:href = $uri]/descendant::nuds:descMeta/nuds:title[@xml:lang = $lang]">
+										<xsl:value-of select="$nudsGroup//object[@xlink:href = $uri]/descendant::nuds:descMeta/nuds:title[@xml:lang = $lang]"/>
+									</xsl:when>
+									<xsl:otherwise>
+										<xsl:value-of select="normalize-space(.)"/>
+									</xsl:otherwise>
+								</xsl:choose>
+
 							</xsl:when>
 							<xsl:when test="contains($href, 'geonames.org') and not(string(.))">
 								<xsl:variable name="geonameId" select="tokenize($href, '/')[4]"/>
@@ -183,7 +233,23 @@
 										<xsl:value-of select="numishare:getNomismaLabel($rdf/*[@rdf:about = $href], 'en')"/>
 									</xsl:when>
 									<xsl:otherwise>
-										<xsl:value-of select="normalize-space(.)"/>
+										<xsl:choose>
+											<xsl:when test="self::*:date or self::*:fromDate or self::*:toDate">
+												<xsl:choose>
+													<xsl:when test="string($lang)">
+														<!--<xsl:value-of select="format-date(xs:date(concat(@standardDate, '-01-01')), '[Y1]-[Mno]-[D1] [E]', 'fr', 'AD', ())"/>-->
+														<xsl:value-of select="normalize-space(.)"/>
+													</xsl:when>
+													<xsl:otherwise>
+														<xsl:value-of select="normalize-space(.)"/>
+													</xsl:otherwise>
+												</xsl:choose>
+											</xsl:when>
+											<xsl:otherwise>
+												<xsl:value-of select="normalize-space(.)"/>
+											</xsl:otherwise>
+										</xsl:choose>
+
 									</xsl:otherwise>
 								</xsl:choose>
 							</xsl:otherwise>
@@ -191,7 +257,9 @@
 					</xsl:variable>
 
 					<xsl:choose>
-						<xsl:when test="not(ancestor::nuds:typeDesc/@xlink:href) and not(ancestor::nuds:refDesc) and not(@xlink:href)">
+						<!-- process non-linkable literals -->
+						<xsl:when
+							test="not(ancestor::nuds:typeDesc/@xlink:href) and not(ancestor::nuds:refDesc) and not(self::nuds:symbol) and not(@xlink:href)">
 							<span>
 								<xsl:attribute name="property"
 									select="
@@ -226,12 +294,12 @@
 											</xsl:call-template>
 											<xsl:text>--</xsl:text>
 											<!-- add self -->
-											
+
 											<xsl:variable name="selfQuery">
 												<xsl:for-each select="$regions//hierarchy[@uri = $href]/region">
 													<xsl:sort select="position()" order="descending"/>
 													<xsl:variable name="id" select="substring-after(@uri, 'id/')"/>
-													
+
 													<xsl:choose>
 														<xsl:when test="position() = 1">
 															<xsl:value-of select="concat('+&#x022;L', position(), '|', ., '/', $id, '&#x022;')"/>
@@ -243,11 +311,11 @@
 																<xsl:text> </xsl:text>
 																<xsl:value-of
 																	select="
-																	concat('+&#x022;', if (position() = last()) then
-																	'L1'
-																	else
-																	substring-after(following-sibling::node()[1]/@uri, 'id/'), '|',
-																	., '/', substring-after(@uri, 'id/'), '&#x022;')"
+																		concat('+&#x022;', if (position() = last()) then
+																			'L1'
+																		else
+																			substring-after(following-sibling::node()[1]/@uri, 'id/'), '|',
+																		., '/', substring-after(@uri, 'id/'), '&#x022;')"
 																/>
 															</xsl:for-each>
 														</xsl:otherwise>
@@ -256,11 +324,11 @@
 												<xsl:text> </xsl:text>
 												<xsl:value-of
 													select="
-													concat('+&#x022;', substring-after($regions//hierarchy[@uri = $href]/region[1]/@uri, 'id/'), '|', $value, '/', substring-after($href,
-													'id/'), '&#x022;')"
+														concat('+&#x022;', substring-after($regions//hierarchy[@uri = $href]/region[1]/@uri, 'id/'), '|', $value, '/', substring-after($href,
+														'id/'), '&#x022;')"
 												/>
 											</xsl:variable>
-											
+
 											<a
 												href="{$display_path}results?q=region_hier:({encode-for-uri($selfQuery)}){if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
 												<xsl:value-of select="$value"/>
@@ -274,11 +342,52 @@
 												<xsl:value-of select="tokenize($href, '/')[last()]"/>
 												<xsl:text>&#x022;</xsl:text>
 											</xsl:variable>
-											
+
 											<a
 												href="{$display_path}results?q=region_hier:({encode-for-uri($selfQuery)}){if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
 												<xsl:value-of select="$value"/>
 											</a>
+										</xsl:otherwise>
+									</xsl:choose>
+								</xsl:when>
+								<xsl:when test="self::nuds:symbol">
+									<xsl:variable name="side" select="substring(parent::node()/name(), 1, 3)"/>
+
+									<xsl:choose>
+										<xsl:when test="child::tei:div">
+
+											<xsl:apply-templates select="tei:div" mode="symbols">
+												<xsl:with-param name="field" select="$field"/>
+												<xsl:with-param name="side" select="$side"/>
+												<xsl:with-param name="position"
+													select="
+														if (@position) then
+															@position
+														else
+															@localType"
+												/>
+											</xsl:apply-templates>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:call-template name="display-label">
+												<xsl:with-param name="field" select="$field"/>
+												<xsl:with-param name="value" select="$value"/>
+												<xsl:with-param name="href" select="$href"/>
+												<xsl:with-param name="side" select="$side"/>
+												<xsl:with-param name="position"
+													select="
+														if (@position) then
+															@position
+														else
+															@localType"
+												/>
+											</xsl:call-template>
+
+
+											<!-- if the element is a symbol, display image and constituent letters, if applicable -->
+											<xsl:if test="string($href) and self::nuds:symbol">
+												<xsl:apply-templates select="$rdf/*[@rdf:about = $href]"/>
+											</xsl:if>
 										</xsl:otherwise>
 									</xsl:choose>
 								</xsl:when>
@@ -287,50 +396,33 @@
 										<xsl:with-param name="field" select="$field"/>
 										<xsl:with-param name="value" select="$value"/>
 										<xsl:with-param name="href" select="$href"/>
-										<xsl:with-param name="position" select="@position"/>
+										<xsl:with-param name="position"
+											select="
+												if (@position) then
+													@position
+												else
+													@localType"/>
 									</xsl:call-template>
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:otherwise>
 					</xsl:choose>
 
-
-
+					<!-- ***** additional attributes ***** -->
 					<!-- display title -->
 					<xsl:if test="string(@title)">
 						<i> (<xsl:value-of select="@title"/>)</i>
 					</xsl:if>
-					<xsl:if test="string(@position)">
-						<xsl:variable name="langParam" select="
-								if (string($lang)) then
-									$lang
-								else
-									'en'"/>
-						<xsl:variable name="position" select="@position"/>
-						<xsl:choose>
-							<xsl:when test="$positions//position[@value = $position]/label[@lang = $langParam]">
-								<i> (<xsl:value-of select="$positions//position[@value = $position]/label[@lang = $langParam]"/>)</i>
-							</xsl:when>
-							<xsl:otherwise>
-								<i> (<xsl:value-of select="concat(upper-case(substring(@position, 1, 1)), substring(@position, 2))"/>)</i>
-							</xsl:otherwise>
-						</xsl:choose>
-					</xsl:if>
+
 					<!-- display certainty -->
-					<xsl:if test="string(@certainty)">
-						<i> (<xsl:value-of select="@certainty"/>)</i>
-					</xsl:if>
+					<xsl:apply-templates select="@certainty"/>
+
 					<!-- display calendar -->
 					<xsl:if test="string(@calendar)">
 						<i> (<xsl:value-of select="@calendar"/>)</i>
 					</xsl:if>
 					<xsl:if test="string(@for)">
 						<i> (<xsl:value-of select="@for"/>)</i>
-					</xsl:if>
-
-					<!-- if the element is a symbol, display image, if available -->
-					<xsl:if test="string($href) and self::nuds:symbol">
-						<xsl:apply-templates select="$symbols//rdf:RDF/*[@rdf:about = $href]" mode="symbol"/>
 					</xsl:if>
 
 					<!-- create links to resources -->
@@ -344,19 +436,19 @@
 
 				<!-- display region hierarchy if region_hier is a facet -->
 				<xsl:if test="$field = 'mint' and $regionHierarchy = true() and contains($href, 'nomisma.org')">
-					
+
 					<!-- only display the hierarchy if there is a positive response from the Nomisma API -->
-						<xsl:if test="$regions//hierarchy[@uri = $href]/region">
-							<li>
-								<b>
-									<xsl:value-of select="numishare:regularize_node('region', $lang)"/>
-									<xsl:text>: </xsl:text>
-								</b>
-								<xsl:call-template name="assemble_hierarchy_query">
-									<xsl:with-param name="href" select="$href"/>
-								</xsl:call-template>
-							</li>							
-						</xsl:if>
+					<xsl:if test="$regions//hierarchy[@uri = $href]/region">
+						<li>
+							<b>
+								<xsl:value-of select="numishare:regularize_node('region', $lang)"/>
+								<xsl:text>: </xsl:text>
+							</b>
+							<xsl:call-template name="assemble_hierarchy_query">
+								<xsl:with-param name="href" select="$href"/>
+							</xsl:call-template>
+						</li>
+					</xsl:if>
 				</xsl:if>
 			</xsl:when>
 			<xsl:otherwise>
@@ -394,37 +486,42 @@
 									</xsl:choose>
 
 									<!-- if the $recordType is 'conceptual' and there is no legend or description, and there are subtypes, display the subtype data -->
-									<xsl:if test="$recordType = 'conceptual' and count($subtypes//subtype) &gt; 0">
-										<xsl:if test="(local-name() = 'obverse' or local-name() = 'reverse') and not(nuds:type)">
+									<xsl:if test="$recordType = 'conceptual' and (local-name() = 'obverse' or local-name() = 'reverse')">
+
+										<xsl:if test="count($subtypes//subtype) &gt; 0">
 											<xsl:variable name="side" select="local-name()"/>
-											<li>
-												<b>
-													<xsl:value-of select="numishare:regularize_node('description', $lang)"/>
-													<xsl:text>: </xsl:text>
-												</b>
-												<xsl:for-each
-													select="
-														distinct-values($subtypes//subtype/descendant::*[local-name() = $side]/nuds:type/nuds:description[if (@xml:lang = $lang) then
-															@xml:lang = $lang
-														else
-															@xml:lang = 'en'])">
-													<xsl:value-of select="."/>
-													<xsl:if test="not(position() = last())"> | </xsl:if>
-												</xsl:for-each>
-											</li>
-										</xsl:if>
-										<xsl:if test="(local-name() = 'obverse' or local-name() = 'reverse') and not(nuds:legend)">
-											<xsl:variable name="side" select="local-name()"/>
-											<li>
-												<b>
-													<xsl:value-of select="numishare:normalizeLabel('maps_legend', $lang)"/>
-													<xsl:text>: </xsl:text>
-												</b>
-												<xsl:for-each select="distinct-values($subtypes//subtype/descendant::*[local-name() = $side]/nuds:legend)">
-													<xsl:value-of select="."/>
-													<xsl:if test="not(position() = last())"> | </xsl:if>
-												</xsl:for-each>
-											</li>
+
+											<xsl:if test="not(nuds:type) and $subtypes//subtype/descendant::*[local-name() = $side]/nuds:type/nuds:description">
+												<xsl:variable name="side" select="local-name()"/>
+												<li>
+													<b>
+														<xsl:value-of select="numishare:regularize_node('type', $lang)"/>
+														<xsl:text>: </xsl:text>
+													</b>
+													<xsl:for-each
+														select="
+															distinct-values($subtypes//subtype/descendant::*[local-name() = $side]/nuds:type/nuds:description[if (@xml:lang = $lang) then
+																@xml:lang = $lang
+															else
+																@xml:lang = 'en'])">
+														<xsl:value-of select="."/>
+														<xsl:if test="not(position() = last())"> | </xsl:if>
+													</xsl:for-each>
+												</li>
+											</xsl:if>
+											<xsl:if test="not(nuds:legend) and $subtypes//subtype/descendant::*[local-name() = $side]/nuds:legend">
+												<xsl:variable name="side" select="local-name()"/>
+												<li>
+													<b>
+														<xsl:value-of select="numishare:regularize_node('legend', $lang)"/>
+														<xsl:text>: </xsl:text>
+													</b>
+													<xsl:for-each select="distinct-values($subtypes//subtype/descendant::*[local-name() = $side]/nuds:legend)">
+														<xsl:value-of select="."/>
+														<xsl:if test="not(position() = last())"> | </xsl:if>
+													</xsl:for-each>
+												</li>
+											</xsl:if>
 										</xsl:if>
 									</xsl:if>
 
@@ -441,7 +538,8 @@
 					</xsl:when>
 					<xsl:otherwise>
 						<!-- suppress type and legend from nested list output for physical records: these fields are displayed with the images -->
-						<xsl:if test="child::*[not(local-name() = 'type' or local-name() = 'legend')]">
+						<!-- November 2020: display the section and heading if $hasDies = true() -->
+						<xsl:if test="(child::*[not(local-name() = 'type' or local-name() = 'legend')]) or $hasDies = true()">
 							<li>
 								<xsl:choose>
 									<xsl:when test="parent::physDesc">
@@ -457,6 +555,18 @@
 								</xsl:choose>
 								<ul>
 									<xsl:apply-templates select="*[not(local-name() = 'type' or local-name() = 'legend')]" mode="descMeta"/>
+
+									<!-- if $hasDies is true for a physical collection, then display the die link(s) in the appropriate obverse/reverse section -->
+									<xsl:if test="$collection_type = 'object' and $hasDies = true()">
+										<xsl:choose>
+											<xsl:when test="local-name() = 'obverse' and parent::nuds:typeDesc">
+												<xsl:apply-templates select="doc('input:dies')//res:binding[@name = 'die']" mode="coin-die"/>
+											</xsl:when>
+											<xsl:when test="local-name() = 'reverse' and parent::nuds:typeDesc">
+												<xsl:apply-templates select="doc('input:dies')//res:binding[@name = 'altDie']" mode="coin-die"/>
+											</xsl:when>
+										</xsl:choose>
+									</xsl:if>
 								</ul>
 							</li>
 						</xsl:if>
@@ -464,7 +574,22 @@
 				</xsl:choose>
 			</xsl:otherwise>
 		</xsl:choose>
+
+		<!-- if the element is a persname with a Nomisma URI, then extract the state and dynasty from the Nomisma RDF -->
+		<xsl:if test="local-name() = 'persname' and contains(@xlink:href, 'nomisma.org')">
+			<xsl:variable name="href" select="@xlink:href"/>
+
+			<!-- nest the org/dynasty sub-fields under the person -->
+			<xsl:if test="$rdf//*[@rdf:about = $href]/org:hasMembership or $rdf//*[@rdf:about = $href]/org:memberOf">
+				<li>
+					<ul>
+						<xsl:apply-templates select="$rdf//*[@rdf:about = $href]/org:hasMembership | $rdf//*[@rdf:about = $href]/org:memberOf"/>
+					</ul>
+				</li>
+			</xsl:if>
+		</xsl:if>
 	</xsl:template>
+
 	<xsl:template match="*[local-name() = 'objectXMLWrap']">
 		<xsl:variable name="label">
 			<xsl:choose>
@@ -484,22 +609,55 @@
 			</xsl:choose>
 		</li>
 	</xsl:template>
+
 	<xsl:template name="display-label">
 		<xsl:param name="field"/>
 		<xsl:param name="value"/>
 		<xsl:param name="href"/>
+		<xsl:param name="side"/>
 		<xsl:param name="position"/>
 
+		<xsl:variable name="facet" select="concat($field, '_facet')"/>
+
 		<xsl:choose>
-			<xsl:when test="string($position) and $positions//position[@value = $position]">
-				<xsl:variable name="side" select="substring(parent::node()/name(), 1, 3)"/>
-				<a
-					href="{$display_path}results?q=symbol_{$side}_{$position}_facet:&#x022;{$value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
-					<xsl:value-of select="$value"/>
-				</a>
+			<xsl:when test="$field = 'symbol'">
+
+				<!-- get the first crmdig Digital Image URL from the $rdf -->
+				<xsl:variable name="image-url" select="$rdf/*[@rdf:about = $href]/descendant::crmdig:D1_Digital_Object[1]/@rdf:about"/>
+
+				<xsl:choose>
+					<xsl:when test="string($position) and $positions//position[@value = $position]">
+						<a
+							href="{$display_path}results?q=symbol_{$side}_{$position}_facet:&#x022;{if (string($image-url)) then concat($image-url, '%7C', $value) else $value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+							<xsl:value-of select="$value"/>
+						</a>
+					</xsl:when>
+					<xsl:otherwise>
+						<a
+							href="{$display_path}results?q=symbol_{$side}_facet:&#x022;{if (string($image-url)) then concat($image-url, '%7C', $value) else $value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+							<xsl:value-of select="$value"/>
+						</a>
+					</xsl:otherwise>
+				</xsl:choose>
 			</xsl:when>
-			<xsl:when test="contains($facets, $field)">
-				<a href="{$display_path}results?q={$field}_facet:&#x022;{$value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+			<xsl:when test="boolean(index-of($facets, $facet)) = true()">
+				<!-- if the $lang is enabled in the config (implying indexing into solr), then direct the user to the language-specific Solr query based on Nomisma prefLabel,
+					otherwise use the English preferred label -->
+
+				<xsl:variable name="queryValue">
+					<xsl:choose>
+						<xsl:when test="contains($href, 'nomisma.org') and not($langEnabled = true())">
+							<xsl:value-of select="numishare:getNomismaLabel($rdf/*[@rdf:about = $href], 'en')"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="$value"/>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:variable>
+
+
+				<a
+					href="{$display_path}results?q={$field}_facet:&#x022;{$queryValue}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
 					<xsl:choose>
 						<xsl:when test="contains($href, 'geonames.org')">
 							<xsl:choose>
@@ -523,26 +681,58 @@
 		</xsl:choose>
 	</xsl:template>
 
+	<!-- *************** DISPLAY PREFERRED LABEL FOR CERTAINTY, IF A NOMISMA URI ******************-->
+	<xsl:template match="@certainty">
+		<xsl:text> </xsl:text>
+		<i>
+			<xsl:text>(</xsl:text>
+			<xsl:choose>
+				<xsl:when test="matches(., 'https?://nomisma\.org')">
+					<xsl:variable name="href" select="."/>
+
+					<a href="{$href}">
+						<xsl:value-of select="numishare:getNomismaLabel($rdf/*[@rdf:about = $href], $lang)"/>
+					</a>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="."/>
+				</xsl:otherwise>
+			</xsl:choose>
+			<xsl:text>)</xsl:text>
+		</i>
+	</xsl:template>
+
 	<!-- *************** RENDER RDF ABOUT SYMBOLS ******************-->
-	<xsl:template match="*" mode="symbol">
-		<xsl:if test="foaf:depiction">
-			<xsl:variable name="title"
-				select="
-					concat(if (skos:prefLabel[@xml:lang = $lang]) then
-						skos:prefLabel[@xml:lang = $lang]
-					else
-						skos:prefLabel[@xml:lang = 'en'], ': ', if (skos:definition[@xml:lang = $lang]) then
-						skos:definition[@xml:lang = $lang]
-					else
-						skos:definition[@xml:lang = 'en'])"/>
+	<xsl:template match="nmo:Monogram | crm:E37_Mark">
+		<xsl:apply-templates select="descendant::crmdig:D1_Digital_Object">
+			<xsl:with-param name="uri" select="@rdf:about"/>
+		</xsl:apply-templates>
 
-			<xsl:for-each select="foaf:depiction">
-				<a href="{@rdf:resource}" class="thumbImage" id="{tokenize(@rdf:resource, '/')[last()]}" title="{$title}">
-					<span class="glyphicon glyphicon-camera"/>
-				</a>
+		<xsl:if test="crm:P106_is_composed_of">
+			<xsl:text>, consists of </xsl:text>
+			<xsl:for-each select="crm:P106_is_composed_of">
+				<xsl:if test="position() = last()">
+					<xsl:text> and</xsl:text>
+				</xsl:if>
+				<xsl:text> </xsl:text>
+				<xsl:value-of select="."/>
+				<xsl:if test="not(position() = last()) and (count(../crm:P106_is_composed_of) &gt; 2)">
+					<xsl:text>,</xsl:text>
+				</xsl:if>
 			</xsl:for-each>
-
 		</xsl:if>
+	</xsl:template>
+
+	<xsl:template match="crmdig:D1_Digital_Object">
+		<xsl:param name="uri"/>
+		<xsl:text> </xsl:text>
+		<a href="{$uri}">
+			<img src="{@rdf:about}" alt="symbol" style="height:24px"/>
+		</a>
+		<xsl:if test="not(position() = last())">
+			<xsl:text> -</xsl:text>
+		</xsl:if>
+
 	</xsl:template>
 
 	<!-- *************** FORMAT CONTROL MARKS FROM INDIVIDUAL SYMBOL ELEMENTS ******************-->
@@ -587,11 +777,16 @@
 	<!-- *************** HANDLE SUBTYPES DELIVERED FROM XQUERY ******************-->
 	<xsl:template match="subtype">
 		<xsl:param name="uri_space"/>
+		<xsl:param name="endpoint"/>
+		<xsl:param name="rtl"/>
+
 		<xsl:variable name="subtypeId" select="@recordId"/>
+		<xsl:variable name="objectUri" select="concat($uri_space, $subtypeId)"/>
+
 		<div class="row">
-			<div class="col-md-3" about="{concat($uri_space, $subtypeId)}" typeof="nmo:TypeSeriesItem">
-				<h4 property="dcterms:title">
-					<a href="{concat($uri_space, $subtypeId)}">
+			<div class="col-md-3" about="{$objectUri}" typeof="nmo:TypeSeriesItem">
+				<h4 property="skos:prefLabel">
+					<a href="{$objectUri}">
 						<xsl:value-of select="nuds:descMeta/nuds:title"/>
 					</a>
 				</h4>
@@ -603,10 +798,46 @@
 				</ul>
 			</div>
 			<div class="col-md-9">
-				<xsl:apply-templates select="document(concat($request-uri, 'apis/type-examples?id=', $subtypeId, '&amp;subtype=true'))/*" mode="type-examples"/>
+				<xsl:apply-templates select="document(concat($request-uri, 'apis/type-examples?id=', $subtypeId))/res:sparql" mode="type-examples">
+					<xsl:with-param name="subtype" select="true()" as="xs:boolean"/>
+					<xsl:with-param name="objectUri" select="$objectUri"/>
+					<xsl:with-param name="endpoint" select="$endpoint"/>
+					<xsl:with-param name="rtl" select="$rtl"/>
+				</xsl:apply-templates>
 			</div>
 		</div>
 		<hr/>
+	</xsl:template>
+
+	<!-- *************** RDF TEMPLATES ******************-->
+	<!-- these templates process corporate entities and dynasties connected to people in the underlying RDF in order to display them as clickable links to the browse page -->
+	<xsl:template match="org:hasMembership">
+		<xsl:variable name="uri" select="@rdf:resource"/>
+
+		<xsl:apply-templates select="$rdf//org:Membership[@rdf:about = $uri]/org:organization"/>
+	</xsl:template>
+
+	<!-- construct variables of relevant NUDS elements, and then apply the template against this variable element -->
+	<xsl:template match="org:organization">
+		<xsl:variable name="element" as="element()*">
+			<xsl:element name="corpname" namespace="http://nomisma.org/nuds">
+				<xsl:attribute name="xlink:role">state</xsl:attribute>
+				<xsl:attribute name="xlink:href" select="@rdf:resource"/>
+			</xsl:element>
+		</xsl:variable>
+
+		<xsl:apply-templates select="$element" mode="descMeta"/>
+	</xsl:template>
+
+	<xsl:template match="org:memberOf">
+		<xsl:variable name="element" as="element()*">
+			<xsl:element name="famname" namespace="http://nomisma.org/nuds">
+				<xsl:attribute name="xlink:role">dynasty</xsl:attribute>
+				<xsl:attribute name="xlink:href" select="@rdf:resource"/>
+			</xsl:element>
+		</xsl:variable>
+
+		<xsl:apply-templates select="$element" mode="descMeta"/>
 	</xsl:template>
 
 	<!-- ************** PROCESS MODS RECORD INTO CHICAGO MANUAL OF STYLE CITATION ************** -->
@@ -708,34 +939,124 @@
 	<!-- *************** TEI TEMPLATES FOR REFERENCES, LEGENDS TRANSCRIPTIONS, ETC ******************-->
 	<xsl:template match="*:reference[child::tei:*]">
 		<li>
-			<b><xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>:</b>
-			<xsl:apply-templates/>
+			<b><xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>: </b>
+			<xsl:choose>
+				<xsl:when test="@xlink:title">
+					<a
+						href="{$display_path}results?q={if (@xlink:arcrole='nmo:hasTypeSeriesItem') then 'coinType' else 'reference'}_facet:&#x022;{@xlink:title}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+						<xsl:value-of select="@xlink:title"/>
+					</a>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:variable name="label">
+						<xsl:choose>
+							<xsl:when test="tei:title">
+								<xsl:value-of select="tei:title"/>
+								<xsl:if test="tei:idno">
+									<xsl:text> </xsl:text>
+									<xsl:value-of select="tei:idno"/>
+								</xsl:if>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:value-of select="normalize-space(.)"/>
+							</xsl:otherwise>
+						</xsl:choose>
+					</xsl:variable>
+
+					<a
+						href="{$display_path}results?q={if (@xlink:arcrole='nmo:hasTypeSeriesItem') then 'coinType' else 'reference'}_facet:&#x022;{$label}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+						<xsl:apply-templates select="*"/>
+					</a>
+				</xsl:otherwise>
+			</xsl:choose>
+			<xsl:if test="@xlink:href">
+				<xsl:text> </xsl:text>
+				<a href="{@xlink:href}" target="_blank">
+					<span class="glyphicon glyphicon-new-window"/>
+				</a>
+			</xsl:if>
+			<xsl:apply-templates select="@certainty"/>
+		</li>
+	</xsl:template>
+
+	<xsl:template match="*:citation[child::tei:*]">
+		<li>
+			<b><xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>: </b>
+
+			<!-- structure a bibliographic reference -->
+			<xsl:for-each select="tei:author">
+				<xsl:if test="(position() = last()) and position() &gt; 1">
+					<xsl:text> and</xsl:text>
+				</xsl:if>
+				<xsl:text> </xsl:text>
+				<xsl:value-of select="."/>
+				<xsl:if test="not(position() = last()) and (count(../tei:author) &gt; 2)">
+					<xsl:text>,</xsl:text>
+				</xsl:if>
+			</xsl:for-each>
+
+			<!--insert period after final author if it isn't embedded in the value -->
+			<xsl:if test="not(substring(tei:author[last()], -1, 1) = '.')">
+				<xsl:text>. </xsl:text>
+			</xsl:if>
+
+			<xsl:apply-templates select="tei:title"/>
+
+			<xsl:if test="tei:publisher or tei:pubPlace or tei:date">
+				<xsl:text>. </xsl:text>
+
+				<xsl:for-each select="tei:pubPlace">
+					<xsl:if test="(position() = last()) and position() &gt; 1">
+						<xsl:text> and</xsl:text>
+					</xsl:if>
+					<xsl:text> </xsl:text>
+					<xsl:value-of select="."/>
+					<xsl:if test="not(position() = last()) and (count(../tei:pubPlace) &gt; 2)">
+						<xsl:text>,</xsl:text>
+					</xsl:if>
+				</xsl:for-each>
+				<xsl:if test="tei:pubPlace and tei:publisher">
+					<xsl:text>: </xsl:text>
+				</xsl:if>
+
+				<xsl:value-of select="tei:publisher"/>
+
+				<xsl:if test="tei:date">
+					<xsl:text>, </xsl:text>
+					<xsl:value-of select="tei:date"/>
+				</xsl:if>
+
+				<xsl:text>.</xsl:text>
+			</xsl:if>
+
+			<xsl:if test="@xlink:href">
+				<xsl:text> </xsl:text>
+				<a href="{@xlink:href}" target="_blank">
+					<span class="glyphicon glyphicon-new-window"/>
+				</a>
+			</xsl:if>
+
 		</li>
 	</xsl:template>
 
 	<xsl:template match="tei:title">
 		<i>
+			<xsl:if test="@type = 'sub'">
+				<xsl:text>: </xsl:text>
+			</xsl:if>
 			<xsl:apply-templates/>
 		</i>
-		<xsl:if test="string(@key)">
-			<a href="{@key}" target="_blank">
-				<xsl:text> </xsl:text>
-				<span class="glyphicon glyphicon-new-window"/>
-			</a>
-		</xsl:if>
 	</xsl:template>
 
 	<xsl:template match="tei:idno">
-		<xsl:choose>
-			<xsl:when test="parent::node()/@xlink:href">
-				<a href="{parent::node()/@xlink:href}">
-					<xsl:apply-templates/>
-				</a>
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:apply-templates/>
-			</xsl:otherwise>
-		</xsl:choose>
+		<xsl:text> </xsl:text>
+		<xsl:apply-templates/>
+		<xsl:if test="parent::node()/tei:title/@key">
+			<xsl:text> </xsl:text>
+			<a href="{parent::node()/tei:title/@key}" target="_blank">
+				<span class="glyphicon glyphicon-new-window"/>
+			</a>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template match="tei:div" mode="descMeta">
@@ -750,6 +1071,138 @@
 			<xsl:value-of select="@reason"/>
 		</i>
 		<xsl:text>]</xsl:text>
+	</xsl:template>
+
+	<!-- complex symbols and monograms encoded in EpiDoc -->
+	<xsl:template match="tei:div" mode="symbols">
+		<xsl:param name="field"/>
+		<xsl:param name="side"/>
+		<xsl:param name="position"/>
+
+		<xsl:apply-templates select="tei:choice | tei:ab" mode="symbols">
+			<xsl:with-param name="field" select="$field"/>
+			<xsl:with-param name="side" select="$side"/>
+			<xsl:with-param name="position" select="$position"/>
+		</xsl:apply-templates>
+	</xsl:template>
+
+	<xsl:template match="tei:ab" mode="symbols">
+		<xsl:param name="field"/>
+		<xsl:param name="side"/>
+		<xsl:param name="position"/>
+
+		<xsl:choose>
+			<xsl:when test="child::*">
+				<xsl:apply-templates select="*" mode="symbols">
+					<xsl:with-param name="field" select="$field"/>
+					<xsl:with-param name="side" select="$side"/>
+					<xsl:with-param name="position" select="$position"/>
+				</xsl:apply-templates>
+			</xsl:when>
+			<xsl:when test="string-length(normalize-space(.)) &gt; 0">
+				<xsl:apply-templates select="text()" mode="symbols">
+					<xsl:with-param name="field" select="$field"/>
+					<xsl:with-param name="side" select="$side"/>
+					<xsl:with-param name="position" select="$position"/>
+				</xsl:apply-templates>
+			</xsl:when>
+		</xsl:choose>
+
+		<xsl:if test="@rend">
+			<xsl:text> (</xsl:text>
+			<i>
+				<xsl:value-of select="@rend"/>
+			</i>
+			<xsl:text>)</xsl:text>
+		</xsl:if>
+
+		<xsl:if test="not(position() = last())">
+			<xsl:text> / </xsl:text>
+		</xsl:if>
+	</xsl:template>
+
+	<xsl:template match="tei:seg | tei:am | tei:g" mode="symbols">
+		<xsl:param name="field"/>
+		<xsl:param name="side"/>
+		<xsl:param name="position"/>
+
+		<xsl:choose>
+			<xsl:when test="child::*">
+				<xsl:apply-templates select="*" mode="symbols">
+					<xsl:with-param name="field" select="$field"/>
+					<xsl:with-param name="side" select="$side"/>
+					<xsl:with-param name="position" select="$position"/>
+				</xsl:apply-templates>
+			</xsl:when>
+			<xsl:when test="string-length(normalize-space(.)) &gt; 0">
+				<xsl:apply-templates select="text()" mode="symbols">
+					<xsl:with-param name="field" select="$field"/>
+					<xsl:with-param name="side" select="$side"/>
+					<xsl:with-param name="href" select="@ref"/>
+					<xsl:with-param name="position" select="$position"/>
+				</xsl:apply-templates>
+			</xsl:when>
+		</xsl:choose>
+
+
+
+		<xsl:if test="self::tei:g and starts-with(@ref, 'http://numismatics.org')">
+			<xsl:variable name="href" select="@ref"/>
+			<xsl:apply-templates select="$rdf/*[@rdf:about = $href]"/>
+
+			<a href="{$href}" target="_blank" class="external_link">
+				<span class="glyphicon glyphicon-new-window"/>
+			</a>
+		</xsl:if>
+
+		<xsl:if test="@rend">
+			<i>
+				<xsl:text> (</xsl:text>
+				<xsl:value-of select="@rend"/>
+				<xsl:text>)</xsl:text>
+			</i>
+		</xsl:if>
+
+		<xsl:if test="tei:unclear">
+			<i> (unclear)</i>
+		</xsl:if>
+
+		<xsl:if test="not(position() = last())">
+			<i> beside </i>
+		</xsl:if>
+	</xsl:template>
+
+	<xsl:template match="tei:choice" mode="symbols">
+		<xsl:param name="field"/>
+		<xsl:param name="side"/>
+		<xsl:param name="position"/>
+
+		<xsl:for-each select="*">
+			<xsl:apply-templates select="self::node()" mode="symbols">
+				<xsl:with-param name="field" select="$field"/>
+				<xsl:with-param name="side" select="$side"/>
+				<xsl:with-param name="position" select="$position"/>
+			</xsl:apply-templates>
+			<xsl:if test="not(position() = last())">
+				<i> or </i>
+			</xsl:if>
+		</xsl:for-each>
+	</xsl:template>
+
+	<!-- process the text() node into a clickable link -->
+	<xsl:template match="text()" mode="symbols">
+		<xsl:param name="field"/>
+		<xsl:param name="side"/>
+		<xsl:param name="position"/>
+		<xsl:param name="href"/>
+
+		<xsl:call-template name="display-label">
+			<xsl:with-param name="field" select="$field"/>
+			<xsl:with-param name="value" select="."/>
+			<xsl:with-param name="href" select="$href"/>
+			<xsl:with-param name="side" select="$side"/>
+			<xsl:with-param name="position" select="$position"/>
+		</xsl:call-template>
 	</xsl:template>
 
 	<!--***************************************** CREATE LINK FROM CATEGORY **************************************** -->
@@ -808,6 +1261,8 @@
 
 	<!-- **************** OPEN ANNOTATIONS (E.G., LINKS FROM A TEI FILE) **************** -->
 	<xsl:template match="res:sparql" mode="annotations">
+		<xsl:param name="rtl"/>
+		
 		<xsl:variable name="sources" select="distinct-values(descendant::res:result/res:binding[@name = 'source']/res:uri)"/>
 		<xsl:variable name="results" as="element()*">
 			<xsl:copy-of select="res:results"/>
@@ -833,11 +1288,15 @@
 					</div>
 					<div
 						class="col-md-{if ($results/res:result[res:binding[@name='source']/res:uri = $uri][1]/res:binding[@name='thumbnail']/res:uri) then '8' else '12'}">
-						<dl class="dl-horizontal">
-							<dt>Sections</dt>
-							<dd>
-								<xsl:apply-templates select="$results/res:result[res:binding[@name = 'source']/res:uri = $uri]" mode="annotations"/>
-							</dd>
+						<dl class="{if($rtl = true()) then 'dl-horizontal dl-rtl' else 'dl-horizontal'}">
+
+							<!-- only display sections if there are targets (annotations). this is suppressed if the URI is a dcterms:subject, rather than annotation -->
+							<xsl:if test="$results/res:result[res:binding[@name = 'source']/res:uri = $uri]/res:binding[@name = 'target']">
+								<dt>Sections</dt>
+								<dd>
+									<xsl:apply-templates select="$results/res:result[res:binding[@name = 'source']/res:uri = $uri]" mode="annotations"/>
+								</dd>
+							</xsl:if>
 							<dt>Creator</dt>
 							<dd>
 								<xsl:choose>
@@ -891,28 +1350,22 @@
 		</xsl:if>
 	</xsl:template>
 
+	<xsl:template match="res:binding[@name = 'die'] | res:binding[@name = 'altDie']" mode="coin-die">
+		<xsl:variable name="name" select="@name"/>
 
+		<li>
+			<b><xsl:value-of select="numishare:regularize_node('die', $lang)"/>: </b>
+			<a href="{res:uri}">
+				<xsl:value-of select="parent::res:result/res:binding[@name = concat($name, 'Label')]/res:literal"/>
+			</a>
+		</li>
+	</xsl:template>
 
 	<!--***************************************** OPTIONS BAR **************************************** -->
 	<xsl:template name="icons">
 		<div class="row pull-right icons">
 			<div class="col-md-12">
 				<ul class="list-inline">
-					<li>
-						<strong>SHARE:</strong>
-					</li>
-					<li>
-						<!-- AddThis Button BEGIN -->
-						<div class="addthis_toolbox addthis_default_style">
-							<a class="addthis_button_preferred_1"/>
-							<a class="addthis_button_preferred_2"/>
-							<a class="addthis_button_preferred_3"/>
-							<a class="addthis_button_preferred_4"/>
-							<a class="addthis_button_compact"/>
-							<a class="addthis_counter addthis_bubble_style"/>
-						</div>
-						<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=xa-525d63ef6a07cd89"/>
-					</li>
 					<li>
 						<strong>EXPORT:</strong>
 					</li>
@@ -928,6 +1381,11 @@
 					<li>
 						<a href="{$id}.jsonld">JSON-LD</a>
 					</li>
+					<xsl:if test="$recordType = 'physical'">
+						<li>
+							<a href="{$id}.jsonld?profile=linkedart">Linked.art JSON-LD</a>
+						</li>
+					</xsl:if>
 					<xsl:if test="$hasMints = true() or $hasFindspots = true()">
 						<li>
 							<a href="{$id}.kml">KML</a>
@@ -945,7 +1403,7 @@
 							<a href="http://numismatics.org/mirador/?manifest={encode-for-uri($manifestURI)}">(view)</a>
 						</li>
 					</xsl:if>
-					<xsl:if test="$recordType = 'conceptual'">
+					<xsl:if test="$collection_type = 'cointype'">
 						<!-- only display coin type manifest link if there are IIIF service resources -->
 						<xsl:variable name="hasIIIF" select="doc('input:hasIIIF')//res:boolean" as="xs:boolean"/>
 
@@ -1069,6 +1527,7 @@
 		<link rel="alternate" type="application/xml" href="{$objectUri}.xml"/>
 		<link rel="alternate" type="application/rdf+xml" href="{$objectUri}.rdf"/>
 		<link rel="alternate" type="application/ld+json" href="{$objectUri}.jsonld"/>
+		<link rel="alternate" type="application/ld+json" profile="https://linked.art/ns/v1/linked-art.json" href="{$objectUri}.jsonld?profile=linkedart"/>
 		<link rel="alternate" type="text/turtle" href="{$objectUri}.ttl"/>
 		<link rel="alternate" type="application/vnd.google-earth.kml+xml" href="{$objectUri}.kml"/>
 		<link rel="alternate" type="application/vnd.geo+json" href="{$objectUri}.geojson"/>
@@ -1089,17 +1548,47 @@
 			</xsl:attribute>
 		</meta>
 
-		<xsl:for-each select="//mets:fileGrp/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href">
+		<!-- twitter microdata -->
+		<meta name="twitter:card" content="summary_large_image"/>
+		<meta name="twitter:title">
+			<xsl:attribute name="content">
+				<xsl:choose>
+					<xsl:when test="descendant::*:descMeta/*:title[@xml:lang = $lang]">
+						<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang = $lang]"/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of select="descendant::*:descMeta/*:title[@xml:lang = 'en']"/>
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:attribute>
+		</meta>
+		<meta name="twitter:url" content="{$objectUri}"/>
+
+
+		<xsl:for-each select="//mets:fileGrp[@USE = 'obverse']/mets:file[@USE = 'reference']/mets:FLocat/@xlink:href">
 			<meta property="og:image" content="{.}"/>
+			<meta name="twitter:image" content="{.}"/>
 		</xsl:for-each>
 
 		<!-- CSS -->
 		<link rel="shortcut icon" type="image/x-icon" href="{$include_path}/images/favicon.png"/>
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+		<xsl:for-each select="//config/includes/include">
+			<xsl:choose>
+				<xsl:when test="@type = 'css'">
+					<link type="text/{@type}" rel="stylesheet" href="{@url}"/>
+				</xsl:when>
+				<xsl:when test="@type = 'javascript'">
+					<script type="text/{@type}" src="{@url}"/>
+				</xsl:when>
+			</xsl:choose>
+		</xsl:for-each>
+
 		<!-- bootstrap -->
-		<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
-		<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/>
+		<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+		<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"/>
 		<xsl:if test="string(//config/google_analytics)">
 			<script type="text/javascript">
 				<xsl:value-of select="//config/google_analytics"/>
@@ -1107,8 +1596,8 @@
 		</xsl:if>
 
 		<!-- always include leaflet -->
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css"/>
-		<script type="text/javascript" src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js"/>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0/dist/leaflet.css"/>
+		<script type="text/javascript" src="https://unpkg.com/leaflet@1.0.0/dist/leaflet.js"/>
 		<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
 	</xsl:template>
 </xsl:stylesheet>
