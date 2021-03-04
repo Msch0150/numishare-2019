@@ -32,6 +32,7 @@ services:
     command:
       - solr-precreate
       - gettingstarted
+      - curl 'http://localhost:8983/solr/admin/cores?action=create&name=numishare'
   exist:
     image: existdb/existdb:5.2.0
     container_name: exist
