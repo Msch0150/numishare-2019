@@ -39,6 +39,7 @@ services:
       - 8080:8080
       - 8443:8443
     volumes:
+      - "..:/usr/local/projects/numishare"
       - type: volume
         source: data
         target: /exist/webapp/WEB-INF/data
