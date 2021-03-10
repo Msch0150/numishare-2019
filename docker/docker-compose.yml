@@ -30,7 +30,7 @@ services:
       - data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
     command:
-      - solr-precreate
+      - solr-precreate garnix
       - gettingstarted
   exist:
     image: existdb/existdb:5.2.0
