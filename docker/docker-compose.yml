@@ -40,7 +40,7 @@ services:
       - 8443:8443
     volumes:
       - "..:/usr/local/projects/numishare"
-      - ./docker-exist-data:/exist-data
+      - ../../../data/docker-exist-data:/exist-data
   iiif:
     image: lorisimageserver/loris
     container_name: numishare_iiif
