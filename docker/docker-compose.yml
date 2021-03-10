@@ -29,8 +29,9 @@ services:
     volumes:
       - data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
+      - "./core.properties:/var/solr/data/numishare/core.properties"
     command:
-      - solr-precreate numishare /var/solr/data/numishare/conf
+      - solr-precreate
       - gettingstarted
   exist:
     image: existdb/existdb:5.2.0
