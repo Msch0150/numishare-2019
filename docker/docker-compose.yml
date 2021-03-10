@@ -40,12 +40,7 @@ services:
       - 8443:8443
     volumes:
       - "..:/usr/local/projects/numishare"
-      - type: volume
-        source: data
-        target: /exist/webapp/WEB-INF/data
-      - type: volume
-        source: config
-        target: /exist/config
+      - ./docker-exist-data:/exist-data
   iiif:
     image: lorisimageserver/loris
     container_name: numishare_iiif
