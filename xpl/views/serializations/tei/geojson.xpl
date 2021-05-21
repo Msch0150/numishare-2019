@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 	Author: Ethan Gruber
-	Date modified: April 2021
-	Function: Initiate transformation of XML document into RDF	
+	Date: May 2021
+	Function: Serialize EpiDoc document into GeoJSON.
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline"
 	xmlns:oxf="http://www.orbeon.com/oxf/processors">
@@ -25,19 +25,18 @@
 	</p:processor>
 	
 	<p:processor name="oxf:unsafe-xslt">
-		<p:input name="request" href="#request"/>
+		<p:input name="request" href="#request"/>		
 		<p:input name="data" href="aggregate('content', #data, #config)"/>		
-		<p:input name="config" href="../../../../ui/xslt/serializations/object/rdf.xsl"/>
-		<p:output name="data" id="model"/>		
+		<p:input name="config" href="../../../../ui/xslt/serializations/tei/geojson.xsl"/>
+		<p:output name="data" id="model"/>
 	</p:processor>
-	
-	<p:processor name="oxf:xml-serializer">
+
+	<p:processor name="oxf:text-converter">
 		<p:input name="data" href="#model"/>
 		<p:input name="config">
 			<config>
-				<content-type>application/rdf+xml</content-type>
-				<indent>true</indent>
-				<indent-amount>4</indent-amount>
+				<content-type>application/vnd.geo+json</content-type>
+				<encoding>utf-8</encoding>
 			</config>
 		</p:input>
 		<p:output name="data" ref="data"/>
