@@ -30,7 +30,7 @@ services:
       #- data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
       - "./core.properties:/var/solr/data/numishare/core.properties"
-      - ../../../data/docker-solr-data:/var/solr/data/numishare/
+      - ../../../data/docker-solr-data:/var/solr/data/numishare/data
     command:
       - solr-precreate
       - numishare
