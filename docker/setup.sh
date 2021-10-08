@@ -1,6 +1,7 @@
 # Initial setup
 mkdir -p ${HOME}/data/docker-loris-data/images
 mkdir -p ${HOME}/data/docker-solr-data
+sudo chown -R 8983:8983 ${HOME}/data/docker-solr-data
 
 # Cleanup
 cd ${HOME} && \
