@@ -19,7 +19,7 @@ docker-compose up
 
 # Using the current docker-compose.xml you might want to try:
 #
-# Numishare: http://localhost:8081/orbeon/numishare/admin
+# Numishare: http://localhost:8081/orbeon/numishare/admin/
 # Exist DB : http://localhost:8080
 # Solr     : http://localhost:8983/
 # Loris    : http://localhost:10206/
