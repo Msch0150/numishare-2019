@@ -29,7 +29,8 @@ services:
     volumes:
       #- data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
-      #- ../../../data/docker-exist-data:/exist/data
+      - "./core.properties:/var/solr/data/numishare/core.properties"
+      - ../../../data/docker-solr-data:/var/solr/data/numishare/
     command:
       - solr-precreate
       - numishare
