@@ -27,11 +27,12 @@ services:
     ports:
       - "8983:8983"
     volumes:
-      - data:/var/solr
+      #- data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
+      #- ../../../data/docker-exist-data:/exist/data
     command:
       - solr-precreate
-      - precreate01
+      - numishare
   exist:
     image: existdb/existdb:5.2.0
     container_name: exist
