@@ -14,6 +14,7 @@ export TARGET_DIR=${HOME}/numishare && \
 mkdir -p ${TARGET_DIR} && cd ${TARGET_DIR} && \
 wget https://github.com/Msch0150/numishare/archive/master.zip && \
 unzip master.zip && sudo chown -R 8983:8983 numishare-master/solr-home/ && \
+sudo chown 8983:8983 numishare-master/docker/core.properties && \
 cd numishare-master/docker
 
 docker-compose up
