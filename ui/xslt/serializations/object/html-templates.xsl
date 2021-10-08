@@ -351,7 +351,13 @@
 									</xsl:choose>
 								</xsl:when>
 								<xsl:when test="self::nuds:symbol">
-									<xsl:variable name="side" select="substring(parent::node()/name(), 1, 3)"/>
+									<!-- if the symbol is for a die, then ignore the side -->
+									<xsl:variable name="side"
+										select="
+											if (parent::nuds:typeDesc) then
+												''
+											else
+												substring(parent::node()/name(), 1, 3)"/>
 
 									<xsl:choose>
 										<xsl:when test="child::tei:div">
@@ -557,13 +563,13 @@
 									<xsl:apply-templates select="*[not(local-name() = 'type' or local-name() = 'legend')]" mode="descMeta"/>
 
 									<!-- if $hasDies is true for a physical collection, then display the die link(s) in the appropriate obverse/reverse section -->
-									<xsl:if test="$collection_type = 'object' and $hasDies = true()">
+									<xsl:if test="$collection_type = 'object' and $hasDies = true()">										
 										<xsl:choose>
 											<xsl:when test="local-name() = 'obverse' and parent::nuds:typeDesc">
-												<xsl:apply-templates select="doc('input:dies')//res:binding[@name = 'die']" mode="coin-die"/>
+												<xsl:apply-templates select="doc('input:dies')//query/res:sparql[1]/descendant::res:binding[@name = 'die']" mode="coin-die"/>
 											</xsl:when>
 											<xsl:when test="local-name() = 'reverse' and parent::nuds:typeDesc">
-												<xsl:apply-templates select="doc('input:dies')//res:binding[@name = 'altDie']" mode="coin-die"/>
+												<xsl:apply-templates select="doc('input:dies')//query/res:sparql[2]/descendant::res:binding[@name = 'die']" mode="coin-die"/>
 											</xsl:when>
 										</xsl:choose>
 									</xsl:if>
@@ -633,10 +639,20 @@
 						</a>
 					</xsl:when>
 					<xsl:otherwise>
-						<a
-							href="{$display_path}results?q=symbol_{$side}_facet:&#x022;{if (string($image-url)) then concat($image-url, '%7C', $value) else $value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
-							<xsl:value-of select="$value"/>
-						</a>
+						<xsl:choose>
+							<xsl:when test="string($side)">
+								<a
+									href="{$display_path}results?q=symbol_{$side}_facet:&#x022;{if (string($image-url)) then concat($image-url, '%7C', $value) else $value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+									<xsl:value-of select="$value"/>
+								</a>
+							</xsl:when>
+							<xsl:otherwise>
+								<a
+									href="{$display_path}results?q=symbol_facet:&#x022;{if (string($image-url)) then concat($image-url, '%7C', $value) else $value}&#x022;{if (string($langParam)) then concat('&amp;lang=', $langParam) else ''}">
+									<xsl:value-of select="$value"/>
+								</a>
+							</xsl:otherwise>
+						</xsl:choose>
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:when>
@@ -1262,7 +1278,7 @@
 	<!-- **************** OPEN ANNOTATIONS (E.G., LINKS FROM A TEI FILE) **************** -->
 	<xsl:template match="res:sparql" mode="annotations">
 		<xsl:param name="rtl"/>
-		
+
 		<xsl:variable name="sources" select="distinct-values(descendant::res:result/res:binding[@name = 'source']/res:uri)"/>
 		<xsl:variable name="results" as="element()*">
 			<xsl:copy-of select="res:results"/>

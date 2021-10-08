@@ -201,7 +201,7 @@
 			<p:processor name="oxf:url-generator">
 				<p:input name="config">
 					<config>
-						<url>oxf:/apps/numishare/ui/sparql/query-die-relations.sparql</url>
+						<url>oxf:/apps/numishare/ui/sparql/query-die-relations-for-coin.sparql</url>
 						<content-type>text/plain</content-type>
 						<encoding>utf-8</encoding>
 					</config>
@@ -251,6 +251,7 @@
 							<statements>
 								<xsl:call-template name="numishare:queryDieRelationsForCoin">
 									<xsl:with-param name="objectURI" select="$uri"/>
+									<xsl:with-param name="side" select="doc('input:side')/side"/>
 									<xsl:with-param name="namedGraph" select="doc('input:namedGraph')/namedGraph"/>
 								</xsl:call-template>			
 							</statements>

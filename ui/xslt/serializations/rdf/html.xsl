@@ -45,6 +45,7 @@
 
 	<xsl:variable name="hasFindspots" select="doc('input:hasFindspots')//res:boolean" as="xs:boolean"/>
 	<xsl:variable name="hasMints" select="doc('input:hasMints')//res:boolean" as="xs:boolean"/>
+	<xsl:variable name="hasSymbolRelations" select="doc('input:hasSymbolRelations')//res:boolean" as="xs:boolean"/>
 
 	<!-- namespaces -->
 	<xsl:variable name="namespaces" as="item()*">
@@ -138,8 +139,11 @@
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0/dist/leaflet.css"/>
 		<script src="https://unpkg.com/leaflet@1.0.0/dist/leaflet.js"/>
 		<script type="text/javascript" src="{$include_path}/javascript/leaflet.ajax.min.js"/>
-		<script type="text/javascript" src="{$include_path}/javascript/leaflet-heatmap.js"/>
-		<script type="text/javascript" src="{$include_path}/javascript/symbol_map_functions.js"/>
+		<script type="text/javascript" src="{$include_path}/javascript/display_map_functions.js"/>
+		
+		<!-- network graph functions -->
+		<script type="text/javascript" src="https://d3plus.org/js/d3plus-network.v1.0.full.min.js"/>
+		<script type="text/javascript" src="{$include_path}/javascript/network_functions.js"/>
 
 		<!-- google analytics -->
 		<xsl:if test="string(//config/google_analytics)">
@@ -183,25 +187,49 @@
 
 					<!-- display map -->
 					<xsl:if test="$hasMints = true() or $hasFindspots = true()">
-						<h3>Map</h3>
-						<div id="mapcontainer" class="map-normal">
-							<div id="info"/>
+						<div class="section">
+							<h3>Map</h3>
+							<div id="mapcontainer" class="map-normal">
+								<div id="info"/>
+							</div>
+							<div style="margin:10px 0">
+								<table>
+									<tbody>
+										<tr>
+											<td style="background-color:#6992fd;border:2px solid black;width:50px;"/>
+											<td style="width:100px">Mints</td>
+											<td style="background-color:#d86458;border:2px solid black;width:50px;"/>
+											<td style="width:100px">Hoards</td>
+											<td style="background-color:#f98f0c;border:2px solid black;width:50px;"/>
+											<td style="width:100px">Finds</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>						
+					</xsl:if>	
+					
+					<!-- display network graph -->
+					<xsl:if test="$hasSymbolRelations = true()">
+						<div class="section">
+							<h3>Network Graph</h3>
+							<div style="margin:10px 0">
+								<table>
+									<tbody>
+										<tr>
+											<td style="background-color:#a8a8a8;border:2px solid black;width:50px;"/>
+											<td style="width:100px">This Symbol</td>
+											<td style="background-color:#6985c6;border:2px solid black;width:50px;"/>
+											<td style="width:100px">Immediate Link</td>
+											<td style="background-color:#b3c9fc;border:2px solid black;width:50px;"/>
+											<td style="width:100px">Secondary Link</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="network-graph hidden" id="{generate-id()}"/>
 						</div>
-						<div style="margin:10px 0">
-							<table>
-								<tbody>
-									<tr>
-										<td style="background-color:#6992fd;border:2px solid black;width:50px;"/>
-										<td style="width:100px">Mints</td>
-										<td style="background-color:#d86458;border:2px solid black;width:50px;"/>
-										<td style="width:100px">Hoards</td>
-										<td style="background-color:#a1d490;border:2px solid black;width:50px;"/>
-										<td style="width:100px">Finds</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</xsl:if>
+					</xsl:if>						
 
 					<!-- display associated coin types, if applicable -->
 					<xsl:if test="count(doc('input:types')//res:result) &gt; 0">
@@ -215,6 +243,7 @@
 										//config/sparql_endpoint"
 							/>
 							<xsl:with-param name="rtl" select="boolean(//config/languages/language[@code = $lang]/@rtl)"/>
+							<xsl:with-param name="lang" select="$lang"/>
 						</xsl:apply-templates>
 					</xsl:if>
 				</div>
@@ -233,6 +262,9 @@
 						<li>
 							<a href="{$id}.jsonld">JSON-LD</a>
 						</li>
+						<li>
+							<a href="{$id}.geojson">GeoJSON</a>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -240,6 +272,9 @@
 
 		<!-- hidden variables -->
 		<div class="hidden">
+			<span id="path">
+				<xsl:value-of select="concat($display_path, 'symbol/')"/>
+			</span>
 			<span id="baselayers">
 				<xsl:value-of select="string-join(//config/baselayers/layer[@enabled = true()], ',')"/>
 			</span>
@@ -252,6 +287,7 @@
 			<span id="objectURI">
 				<xsl:value-of select="$objectUri"/>
 			</span>
+			<span id="collection_type">symbol</span>
 		</div>
 	</xsl:template>
 

@@ -724,7 +724,10 @@
 											</a>
 										</h4>
 
-										<div namedGraph="{.}" class="network-graph hidden" id="{generate-id()}"/>										
+										<!-- only display graph on die pages -->
+										<xsl:if test="$collection_type = 'die'">
+											<div namedGraph="{.}" class="network-graph hidden" id="{generate-id()}"/>
+										</xsl:if>							
 
 										<!-- display die link table only in a type page -->
 										<div>
@@ -1264,7 +1267,12 @@
 	<xsl:template match="nuds:provenance" mode="descMeta">
 		<li>
 			<h4>
-				<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
+				<xsl:choose>
+					<xsl:when test="//config/facets/facet[. = 'source_facet']">Source</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
+					</xsl:otherwise>
+				</xsl:choose>
 			</h4>
 			<ul>
 				<xsl:apply-templates select="descendant::nuds:chronItem">
@@ -1290,7 +1298,12 @@
 	<xsl:template match="nuds:acquiredFrom | nuds:previousColl">
 
 		<xsl:call-template name="display-label">
-			<xsl:with-param name="field">provenance</xsl:with-param>
+			<xsl:with-param name="field">
+				<xsl:choose>
+					<xsl:when test="//config/facets/facet[. = 'provenance_facet']">provenance</xsl:when>
+					<xsl:when test="//config/facets/facet[. = 'source_facet']">source</xsl:when>
+				</xsl:choose>
+			</xsl:with-param>
 			<xsl:with-param name="value" select="
 					if (nuds:saleCatalog) then
 						normalize-space(nuds:saleCatalog)
@@ -1306,6 +1319,11 @@
 			<a href="{nuds:saleCatalog/@xlink:href}" target="_blank" class="external_link">
 				<span class="glyphicon glyphicon-new-window"/>
 			</a>
+		</xsl:if>
+		
+		<xsl:if test="nuds:identifier">
+			<xsl:text>no. </xsl:text>
+			<xsl:value-of select="nuds:identifier"/>
 		</xsl:if>
 	</xsl:template>
 

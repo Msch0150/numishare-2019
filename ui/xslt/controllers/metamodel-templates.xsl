@@ -3,8 +3,8 @@
     Last Modified: November 2020
     Function: Templates for constructing the SPARQL metamodel for various sorts of API calls that execute a query for metrical analysis, distribution visualizations, network graphs,
     SPARQL-based facets in vis UIs, etc. -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:numishare="https://github.com/ewg118/numishare"
-    exclude-result-prefixes="#all" version="2.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:numishare="https://github.com/ewg118/numishare" exclude-result-prefixes="#all" version="2.0">
 
     <xsl:template name="numishare:filterToMetamodel">
         <xsl:param name="subject"/>
@@ -207,12 +207,127 @@
         </xsl:choose>
     </xsl:template>
     
+    <!-- get hoards associated with either types or symbols -->
+    <xsl:template name="numishare:getHoards">
+        <xsl:param name="uri"/>
+        <xsl:param name="type"/>
+        
+        <xsl:choose>
+            <xsl:when test="$type = 'cointype'">
+                <bind statement="&lt;{$uri}&gt;" variable="?coinType"/>
+                <union>
+                    <group>
+                        <triple s="?object" p="nmo:hasTypeSeriesItem|nmo:hasTypeSeriesItem/skos:exactMatch|nmo:hasTypeSeriesItem/skos:broader+" o="?coinType"/>
+                        <triple s="?object" p="rdf:type" o="nmo:NumismaticObject"/>
+                        <triple s="?object" p="dcterms:isPartOf" o="?hoard"/>
+                        <triple s="?hoard" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+                    </group>
+                    <group>
+                        <triple s="?contents" p="nmo:hasTypeSeriesItem" o="?coinType"/>
+                        <triple s="?contents" p="rdf:type" o="dcmitype:Collection"/>
+                        <triple s="?hoard" p="dcterms:tableOfContents" o="?contents"/>
+                        <triple s="?hoard" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+                    </group>
+                </union>
+            </xsl:when>
+            <xsl:when test="$type = 'symbol'">
+                <xsl:call-template name="numishare:subSelectSymbols">
+                    <xsl:with-param name="uri" select="$uri"/>
+                </xsl:call-template>
+                
+                <union>
+                    <group>
+                        <triple s="?coinType" p="nmo:hasObverse|nmo:hasReverse" o="?side"/>
+                        <triple s="?object" p="nmo:hasTypeSeriesItem" o="?coinType"/>
+                        <triple s="?object" p="rdf:type" o="nmo:NumismaticObject"/>
+                        <triple s="?object" p="dcterms:isPartOf" o="?hoard"/>
+                        <triple s="?hoard" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+                    </group>
+                    <group>
+                        <triple s="?coinType" p="nmo:hasObverse|nmo:hasReverse" o="?side"/>
+                        <triple s="?contents" p="nmo:hasTypeSeriesItem" o="?coinType"/>
+                        <triple s="?contents" p="rdf:type" o="dcmitype:Collection"/>
+                        <triple s="?hoard" p="dcterms:tableOfContents" o="?contents"/>
+                        <triple s="?hoard" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+                    </group>
+                </union>
+            </xsl:when>
+        </xsl:choose>        
+    </xsl:template>
+    
+    <xsl:template name="numishare:getFindspots">
+        <xsl:param name="uri"/>
+        <xsl:param name="type"/>
+        
+        <xsl:choose>
+            <xsl:when test="$type = 'cointype'">
+                <bind statement="&lt;{$uri}&gt;" variable="?coinType"/>
+                <triple s="?object" p="nmo:hasTypeSeriesItem|nmo:hasTypeSeriesItem/skos:exactMatch|nmo:hasTypeSeriesItem/skos:broader+" o="?coinType"/>
+                <triple s="?object" p="rdf:type" o="nmo:NumismaticObject"/>
+                <triple s="?object" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+            </xsl:when>
+            <xsl:when test="$type = 'symbol'">
+                <xsl:call-template name="numishare:subSelectSymbols">
+                    <xsl:with-param name="uri" select="$uri"/>
+                </xsl:call-template>
+                
+                <triple s="?coinType" p="nmo:hasObverse|nmo:hasReverse" o="?side"/>
+                <triple s="?object" p="nmo:hasTypeSeriesItem" o="?coinType"/>
+                <triple s="?object" p="rdf:type" o="nmo:NumismaticObject"/>
+                <triple s="?object" p="nmo:hasFindspot/crm:P7_took_place_at/crm:P89_falls_within" o="?place"/>
+            </xsl:when>
+        </xsl:choose>        
+    </xsl:template>
+    
+    <xsl:template name="numishare:getMints">
+        <xsl:param name="uri"/>
+        
+        <xsl:call-template name="numishare:subSelectSymbols">
+            <xsl:with-param name="uri" select="$uri"/>
+        </xsl:call-template>
+        
+        <triple s="?coinType" p="nmo:hasObverse|nmo:hasReverse" o="?side"/>
+        <triple s="?coinType" p="nmo:hasMint" o="?mint"/>
+        <triple s="?mint" p="geo:location" o="?loc"/>        
+    </xsl:template>
+    
+    <!-- creae a subselect query for sides of coins that are associated with particular symbol URIs -->
+    <xsl:template name="numishare:subSelectSymbols">
+        <xsl:param name="uri"/>
+        
+        <select variables="?side">
+            <union>
+                <group>
+                    <triple s="?side" p="nmo:hasControlmark" o="&lt;{$uri}&gt;"/>
+                </group>
+                <group>
+                    <triple s="?children" p="skos:broader+" o="&lt;{$uri}&gt;"/>
+                    <triple s="?side" p="nmo:hasControlmark" o="?children"/>
+                </group>
+            </union>
+        </select>
+    </xsl:template>    
+
+    <!-- query the other monograms associated with a particular monogram -->
+    <xsl:template name="numishare:querySymbolRelations">
+        <xsl:param name="uri"/>
+
+        <bind statement="&lt;{$uri}&gt;" variable="?symbol"/>
+        <triple s="?type" p="nmo:hasObverse/nmo:hasControlmark|nmo:hasReverse/nmo:hasControlmark" o="?symbol"/>
+        <triple s="?symbol" p="skos:prefLabel" o="?symbolLabel"/>
+        <triple s="?symbol" p="crm:P165i_is_incorporated_in" o="?image"/>
+        <triple s="?type" p="nmo:hasObverse/nmo:hasControlmark|nmo:hasReverse/nmo:hasControlmark" o="?altSymbol" filter="(?altSymbol != ?symbol)"/>
+        <triple s="?altSymbol" p="skos:prefLabel" o="?altSymbolLabel"/>
+        <triple s="?altSymbol" p="crm:P165i_is_incorporated_in" o="?altImage"/>
+    </xsl:template>
+
+
     <!-- construct groups for 1 or more named graphs pertaining to die studies -->
     <xsl:template name="numishare:graph-group">
         <xsl:param name="uri"/>
         <xsl:param name="namedGraph"/>
         <xsl:param name="side"/>
-        
+
         <graph namedGraph="{$namedGraph}">
             <triple s="?object" p="nmo:has{$side}/nmo:hasDie" o="?die"/>
             <triple s="?die" p="rdf:value" o="&lt;{$uri}&gt;"/>
@@ -225,8 +340,10 @@
             <triple s="?object" p="nmo:hasCollection/skos:prefLabel" o="?collection" filter="(langMatches(lang(?collection), &#x022;en&#x022;))"/>
         </optional>
         <triple s="?object" p="void:inDataset" o="?dataset"/>
-        <triple s="?dataset" p="dcterms:publisher" o="?publisher" filter="(lang(?publisher) = &#x022;&#x022; || langMatches(lang(?publisher), &#x022;en&#x022;))"/>
-        <triple s="?dataset" p="dcterms:title" o="?datasetTitle" filter="(lang(?datasetTitle) = &#x022;&#x022; || langMatches(lang(?datasetTitle), &#x022;en&#x022;))"/>
+        <triple s="?dataset" p="dcterms:publisher" o="?publisher"
+            filter="(lang(?publisher) = &#x022;&#x022; || langMatches(lang(?publisher), &#x022;en&#x022;))"/>
+        <triple s="?dataset" p="dcterms:title" o="?datasetTitle"
+            filter="(lang(?datasetTitle) = &#x022;&#x022; || langMatches(lang(?datasetTitle), &#x022;en&#x022;))"/>
         <optional>
             <triple s="?object" p="nmo:has{$side}" o="?side"/>
             <triple s="?side" p="foaf:depiction" o="?reference"/>
@@ -238,14 +355,14 @@
             <triple s="?object" p="foaf:depiction" o="?reference"/>
         </optional>
     </xsl:template>
-    
+
     <!-- query the the relations from one die to another. This query is typically executed twice to look for the die URI in both the obverse and reverse, since
         the side is not implicity within the die RDF data -->
     <xsl:template name="numishare:queryDieRelations">
         <xsl:param name="dieURI"/>
         <xsl:param name="namedGraph"/>
         <xsl:param name="side"/>
-        
+
         <bind statement="&lt;{$dieURI}&gt;" variable="?die"/>
         <graph namedGraph="{$namedGraph}">
             <triple s="?object" p="nmo:has{if ($side = 'obv') then 'Obverse' else 'Reverse'}/nmo:hasDie/rdf:value" o="?die"/>
@@ -256,12 +373,12 @@
         <triple s="?die" p="skos:notation" o="?dieLabel"/>
         <triple s="?altDie" p="skos:notation" o="?altDieLabel"/>
     </xsl:template>
-    
+
     <!-- query dies related to a particular coin type URI -->
     <xsl:template name="numishare:queryDieRelationsForType">
         <xsl:param name="typeURI"/>
         <xsl:param name="namedGraph"/>
-        
+
         <bind statement="&lt;{$typeURI}&gt;" variable="?type"/>
         <triple s="?object" p="nmo:hasTypeSeriesItem" o="?type"/>
         <graph namedGraph="{$namedGraph}">
@@ -274,23 +391,18 @@
         <triple s="?altDie" p="skos:notation" o="?altDieLabel"/>
         <triple s="?type" p="skos:prefLabel" o="?typeLabel" filter="(langMatches(lang(?typeLabel), &#x022;en&#x022;))"/>
     </xsl:template>
-    
+
     <!-- query the obverse and reverse dies associated with a coin URI for a given named graph -->
     <xsl:template name="numishare:queryDieRelationsForCoin">
         <xsl:param name="objectURI"/>
         <xsl:param name="namedGraph"/>
-        
+        <xsl:param name="side"/>
+
         <bind statement="&lt;{$objectURI}&gt;" variable="?object"/>
         <graph namedGraph="{$namedGraph}">
-            <optional>
-                <triple s="?object" p="nmo:hasObverse/nmo:hasDie/rdf:value" o="?die"/>
-            </optional>
-            <optional>
-                <triple s="?object" p="nmo:hasReverse/nmo:hasDie/rdf:value" o="?altDie"/>
-            </optional>
+            <triple s="?object" p="nmo:has{$side}/nmo:hasDie/rdf:value" o="?die"/>
         </graph>
         <triple s="?die" p="skos:prefLabel" o="?dieLabel" filter="(langMatches(lang(?dieLabel), &#x022;en&#x022;))"/>
-        <triple s="?altDie" p="skos:prefLabel" o="?altDieLabel" filter="(langMatches(lang(?altDieLabel), &#x022;en&#x022;))"/>
     </xsl:template>
 
 </xsl:stylesheet>

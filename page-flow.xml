@@ -124,6 +124,7 @@
 	<page path="/numishare/[^\/]+/symbol/(.*)\.rdf" view="xpl/models/symbol/get.xpl"/>
 	<page path="/numishare/[^\/]+/symbol/(.*)\.ttl" model="xpl/models/symbol/get.xpl" view="xpl/views/serializations/rdf/ttl.xpl"/>
 	<page path="/numishare/[^\/]+/symbol/(.*)\.jsonld" model="xpl/models/symbol/get.xpl" view="xpl/views/serializations/object/json-ld.xpl"/>
+	<page path="/numishare/[^\/]+/symbol/(.*)\.geojson" model="xpl/models/symbol/get.xpl" view="xpl/views/serializations/rdf/geojson.xpl"/>
 	<page path="/numishare/[^\/]+/symbol/(.*)$" model="xpl/models/symbol/get.xpl" view="xpl/controllers/conneg-symbol.xpl"/>
 
 	<!-- **** PAGES **** -->
@@ -157,6 +158,7 @@
 	<page path="/numishare/[^\/]+/apis/getSolrDistribution" model="xpl/models/solr/getDistribution.xpl" view="xpl/controllers/sparql/visualization.xpl"/>
 	<page path="/numishare/[^\/]+/apis/getHoardQuant" model="xpl/controllers/getHoardQuant.xpl" view="xpl/controllers/sparql/visualization.xpl"/>
 	<page path="/numishare/[^\/]+/apis/getDieLinks" model="xpl/models/sparql/getDieLinks.xpl" view="xpl/views/serializations/sparql/d3plus-graph-json.xpl"/>
+	<page path="/numishare/[^\/]+/apis/getSymbolLinks" model="xpl/models/sparql/getSymbolLinks.xpl" view="xpl/views/serializations/sparql/d3plus-graph-json.xpl"/>
 
 	<!-- OpenRefine reconciliation services -->
 	<page path="/numishare/[^\/]+/apis/reconcile/preview" model="xpl/models/object/get-id.xpl" view="xpl/views/serializations/nuds/reconcile-preview-html.xpl"/>

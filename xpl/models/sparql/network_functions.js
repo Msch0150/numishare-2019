@@ -1,6 +1,6 @@
 /*******
 FORCED NETWORK GRAPH FUNCTIONS FOR D3PLUS
-Modified: June 2021
+Modified: October 2020
 Function: These are the functions for generating a forced network graph for die and type pages when a die study is actived.
  *******/
 $(document).ready(function () {
@@ -22,7 +22,7 @@ $(document).ready(function () {
             urlParams[ 'namedGraph'] = $(this).attr('namedGraph');
         } else if (collection_type == 'symbol') {
             urlParams[ 'uri'] = $('#objectURI').text();
-        }
+        }        
         
         renderNetworkGraph(id, path, collection_type, urlParams);
     });
@@ -30,8 +30,8 @@ $(document).ready(function () {
 
 //initiate a call to the getDieLinks JSON API and parse the resulting object into a d3plus Network
 function renderNetworkGraph(id, path, collection_type, urlParams) {
-    var api = (collection_type == 'symbol' ? 'getSymbolLinks': 'getDieLinks');
-    
+    var api = (collection_type == 'symbol' ? 'getSymbolLinks' : 'getDieLinks'); 
+
     //alert(urlParams);
     $('#' + id).removeClass('hidden');
     $('#' + id).height(600);
@@ -52,44 +52,21 @@ function renderNetworkGraph(id, path, collection_type, urlParams) {
             },
             label: function (node) {
                 if (node.hasOwnProperty('image')) {
-                    return '';
+                    return node.label + ' <img src="' + node.image + '" style="width:16px"/>';
                 } else {
                     return node.label;
                 }
-            },
-            tooltipConfig: {
-                body: function (node) {
-                    if (node.hasOwnProperty('image')) {
-                        return '<div class="text-center"><strong>' + node.label + '</strong><br/><img src="' + node.image + '" style="width:32px"/></div>';
-                    }
-                }
-            },
-            shapeConfig: {
-                backgroundImage: function (node) {
-                    if (node.hasOwnProperty('image')) {
-                        return node.image;
-                    }
-                }
+                
             },
             color: function (node) {
-                switch (node.side){
-                    case 'obv':
-                        return '#282f6b';
-                        break;
-                    case 'rev':
-                        return '#b22200';
-                        break;
-                    case 'both':
-                        return '#7e12cc';
-                        break;
-                    case 'first':
-                        return '#6985c6';
-                        break;
-                    case 'second':
-                        return '#b3c9fc';
-                        break;
-                    default:
-                        return '#a8a8a8'
+                if (node.side == 'obv' || node.side == 'altSymbol') {
+                    return '#282f6b'
+                } else if (node.side == 'rev') {
+                    return '#b22200';
+                } else if (node.side == 'both') {
+                    return '#7e12cc';
+                } else {
+                    return '#a8a8a8';
                 }
             }
         }).on("click", function (node) {
