@@ -24,4 +24,5 @@ docker-compose up
 # Numishare: http://localhost:8081/orbeon/numishare/admin/
 # Exist DB : http://localhost:8080
 # Solr     : http://localhost:8983/
+# Apache   : http://localhost
 # Loris    : http://localhost:10206/
