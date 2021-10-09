@@ -1,7 +1,7 @@
-Using Numishare with Docker
+# Using Numishare with Docker
 
-Example with Docker for Windows
-=====
+## Example with Docker for Windows
+
 * Install Docker
 * Enable Linux for Windows
 * Install Ubuntu
