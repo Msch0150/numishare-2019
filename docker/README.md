@@ -8,6 +8,13 @@
 * Open terminal
 * Copy and Paste content of setup.sh in terminal
 
+## Create default link for themes
+
+* required to load the javascripts for supporting iiif.
+* 
+* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare; ln -s /usr/local/projects/numishare/ui default
+* Change in admin interface > Modify Settings > Themes and layout http://localhost:8081/orbeon/numishare/
+
 ## Testing IIIF
 
 * cd data/docker-loris-data/
