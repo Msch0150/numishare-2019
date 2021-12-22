@@ -28,7 +28,7 @@
 *  Solr Published: http://solr:8983/solr/numishare/ (default setting. Leave as it is. Docker inserts host "solr" and port "8983")
 *  mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 *  cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
-*  ln -s /usr/local/projects/mymint_01/ui <my_instance_name>
+*  ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
 *  If setup as coint-type:
 *  Change in admin interface, Modify Settings, General settings > Collection Type > Type series: http://nomisma.org/id/pella_type_series (doesn't really matter in this step, but there needs to be entered something). > Save
 *  Change in admin interface > Modify Settings > Themes and layout http://localhost:10200/orbeon/themes
