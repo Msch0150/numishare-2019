@@ -29,8 +29,14 @@
 *  mkdir /var/lib/tomcat7/webapps/orbeon/WEB-INF/resources/apps/themes
 *  cd /var/lib/tomcat7/webapps/orbeon/WEB-INF/resources/apps/themes
 *  ln -s /usr/local/projects/mymint_01/ui <my_instance_name>
+*  # Upload ips files:
+*  cd /usr/local/projects/alpen/xforms/xquery/
+*  curl -v -u admin: http://exist:8080/exist/rest/<my_instance_name>/ --upload-file ./get-subtypes.xql
+*  curl -v -u admin: http://exist:8080/exist/rest/<my_instance_name>/ --upload-file ./aggregate-ids.xql
+*  curl -v -u admin: http://exist:8080/exist/rest/<my_instance_name>/ --upload-file ./aggregate-all.xql
 *  Change in admin interface > Modify Settings > Themes and layout http://localhost:10200/orbeon/themes
 *  Theme Folder: <my_instance_name>
+*  Upload 
   
 
 
