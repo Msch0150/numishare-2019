@@ -8,12 +8,26 @@
 * Open terminal
 * Copy and Paste content of setup.sh in terminal
 
-## Create default link for themes
+## OLD SECTION Create default link for themes
 
 * required to load the javascripts for supporting iiif.
 * 
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare; ln -s /usr/local/projects/numishare/ui default
 * Change in admin interface > Modify Settings > Themes and layout http://localhost:8081/orbeon/numishare/
+
+## Post install tasks
+* docker exec -ti orbeon bash
+* sudo apt-get install telnet
+* cp -r /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
+* Access admin interface > http://localhost:10200/orbeon/numishare/admin/
+* Add new collection:
+*  Tomcat Role: <my_instance_name>
+*  Collection Name: <my_instance_name>
+*  Installation Directory: /usr/local/projects/<my_instance_name>
+*  Public Site: http://localhost:10200/orbeon/numishare/<my_instance_name>
+*  Solr Published: http://solr:8983/solr/numishare/ (default?)
+*  Change in admin interface > Modify Settings > Themes and layout http://localhost:8081/orbeon/numishare/
+
 
 ## Testing IIIF
 
