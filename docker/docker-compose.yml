@@ -12,7 +12,7 @@ services:
     image: numishare:vu
     build: ./orbeon
     ports:
-      - "8081:8080"
+      - "10200:8080"
     environment:
       JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:MaxPermSize=256m -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled'
     volumes:
@@ -28,7 +28,7 @@ services:
     container_name: solr
     image: solr:8.6.2
     ports:
-      - "8983:8983"
+      - "10202:8983"
     volumes:
       #- data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
@@ -41,8 +41,8 @@ services:
     image: existdb/existdb:5.2.0
     container_name: exist
     ports:
-      - 8080:8080
-      - 8443:8443
+      - 10204:8080
+      - 10205:8443
     volumes:
       - "..:/usr/local/projects/numishare"
       - ../../../data/docker-exist-data:/exist/data
@@ -54,7 +54,13 @@ services:
       - ../../../data/docker-loris-data/images:/opt/loris/tests/img
     ports:
       - "10206:5004"
-
+  fuseki:
+    image: stain/jena-fuseki
+    container_name: fuseki
+    volumes:
+      - ./docker-fuseki-data:/fuseki
+    ports:
+      - "10208:3030"
 volumes:
   data:
     driver: local
