@@ -18,12 +18,12 @@
 ## Post install tasks
 * docker exec -ti orbeon bash
 * apt-get install telnet
-* cp -r /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
 * Access admin interface > http://localhost:10200/orbeon/numishare/admin/
 * Add new collection:
 *  Tomcat Role: <my_instance_name>
 *  Collection Name: <my_instance_name>
-*  Installation Directory: /usr/local/projects/<my_instance_name>
+*  Installation Directory: /usr/local/projects/numishare (leave the default)
 *  Public Site: http://localhost:10200/orbeon/numishare/<my_instance_name>
 *  Solr Published: http://solr:8983/solr/numishare/ (default setting. Leave as it is. Docker inserts host "solr" and port "8983")
 *  mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
