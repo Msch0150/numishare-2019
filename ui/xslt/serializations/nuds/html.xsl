@@ -1257,9 +1257,9 @@
 		</div>
 	</xsl:template>
 
-	<xsl:template match="nuds:note">
+	<xsl:template match="nuds:note" mode="descMeta">
 		<li>
-			<xsl:value-of select="."/>
+			<xsl:apply-templates/>
 		</li>
 	</xsl:template>
 
