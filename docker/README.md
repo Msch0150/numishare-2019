@@ -26,7 +26,12 @@
 *  Installation Directory: /usr/local/projects/<my_instance_name>
 *  Public Site: http://localhost:10200/orbeon/numishare/<my_instance_name>
 *  Solr Published: http://solr:8983/solr/numishare/ (default?)
-*  Change in admin interface > Modify Settings > Themes and layout http://localhost:8081/orbeon/numishare/
+*  mkdir /var/lib/tomcat7/webapps/orbeon/WEB-INF/resources/apps/themes
+*  cd /var/lib/tomcat7/webapps/orbeon/WEB-INF/resources/apps/themes
+*  ln -s /usr/local/projects/mymint_01/ui <my_instance_name>
+*  Change in admin interface > Modify Settings > Themes and layout http://localhost:10200/orbeon/themes
+*  Theme Folder: <my_instance_name>
+*  
 
 
 ## Testing IIIF
