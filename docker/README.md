@@ -17,7 +17,7 @@
 
 ## Post install tasks
 * docker exec -ti orbeon bash
-* sudo apt-get install telnet
+* apt-get install telnet
 * cp -r /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
 * Access admin interface > http://localhost:10200/orbeon/numishare/admin/
 * Add new collection:
