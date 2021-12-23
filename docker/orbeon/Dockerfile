@@ -25,9 +25,11 @@ RUN cd ${TEMP_DIR}/orbeon-${OrbeonTag}.${OrbeonDateString}-$(echo ${OrbeonReleas
     sed -i s%../logs/orbeon.log%logs/orbeon.log%g ./WEB-INF/resources/config/log4j.xml && \
     rm orbeon.war && \
     cd .. && \
-    mv orbeon-${OrbeonTag}.${OrbeonDateString}-$(echo ${OrbeonRelease} | tr /a-z/ /A-Z/) ${CATALINA_HOME}/webapps/orbeon
+    mv orbeon-${OrbeonTag}.${OrbeonDateString}-$(echo ${OrbeonRelease} | tr /a-z/ /A-Z/) ${CATALINA_HOME}/webapps/orbeon && \
+    mkdir ${ProjectsDir}
 
 ### Install vim/vi
 
 RUN apt-get update && \
-    apt-get install vim -y
+    apt-get install vim -y \
+    apt-get install telnet -y
