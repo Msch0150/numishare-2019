@@ -61,5 +61,6 @@
 * /usr/local/projects/<my_collection_name>/ui/xslt/pages/index.xsl
 * Change the above for your needs, example: add a banner image in the body section, below the header:
 * Example:  \<img src="http://numismatics.org/themes/ocre/images/banner.jpg" style="width:100%" /\>
+* Example:  \<img src="/themes/alpen/images/banner.jpg" style="width:100%" /\>
 * See: https://github.com/ewg118/numishare/issues/105
 * See: https://github.com/ewg118/numishare/wiki/Numishare-Themes#altering-numishare-public-ui-pages-on-a-per-project-basis (maybe outdated)
