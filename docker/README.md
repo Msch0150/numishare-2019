@@ -42,5 +42,8 @@
 * http://localhost:10206/<my_collection_name>/jpg/my_collection_name>.<my_image_id>.jpg/full/175,/0/default.jpg
 
 * Example:  http://localhost:10206/srm/jpg/srm.20081212-010.1.jpg/full/175,/0/default.jpg
-* 
-* 
+
+## Post Installation Tasks Fuseki (required for cointype)
+
+* Login to fuseki http://localhost:10208/ (username/password is displayed in startup console) and create a dataset "nomisma".
+
