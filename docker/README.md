@@ -37,6 +37,10 @@
 ## Testing IIIF
 
 * cd data/docker-loris-data/
-* mkdir -p images/sar/jpg
-* copy srm.20081212-010.1.jpg images/sar/jpg/
-* http://localhost:10206/sar/jpg/srm.20081212-010.1.jpg/full/175,/0/default.jpg
+* mkdir -p images/<my_collection_name>/jpg
+* copy <my_collection_name>.<my_image_id>.jpg images/<my_collection_name>/jpg/
+* http://localhost:10206/<my_collection_name>/jpg/my_collection_name>.<my_image_id>.jpg/full/175,/0/default.jpg
+
+* Example:  http://localhost:10206/srm/jpg/srm.20081212-010.1.jpg/full/175,/0/default.jpg
+* 
+* 
