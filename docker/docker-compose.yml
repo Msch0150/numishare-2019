@@ -45,7 +45,7 @@ services:
       - 10205:8443
     volumes:
       - "..:/usr/local/projects/numishare"
-      - ../../../data/docker-exist-data:/exist/data
+      - ../../../../data/docker-exist-data:/exist/data
   iiif:
     image: lorisimageserver/loris
     container_name: numishare_iiif
