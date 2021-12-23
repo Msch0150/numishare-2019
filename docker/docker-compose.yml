@@ -18,7 +18,6 @@ services:
     volumes:
       - "./orbeon.xml:/usr/local/tomcat/conf/Catalina/localhost/orbeon.xml"
       - "../../../data/docker-numishare-data:/var/local/projects"
-      - "..:/usr/local/projects/numishare"
       - "..:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare"
       - "./exist-config.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/exist-config.xml"
       - "./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml"
