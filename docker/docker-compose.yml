@@ -17,7 +17,7 @@ services:
       JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:MaxPermSize=256m -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled'
     volumes:
       - "./orbeon.xml:/usr/local/tomcat/conf/Catalina/localhost/orbeon.xml"
-      - "../../../data/docker-numishare-data:/var/local/projects"
+      - "../../../data/docker-numishare-data:/usr/local/projects"
       - "..:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare"
       - "./exist-config.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/exist-config.xml"
       - "./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml"
