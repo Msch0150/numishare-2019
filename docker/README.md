@@ -55,8 +55,8 @@
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
 * vi /usr/local/projects/numishare/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
-* <!-- <my_instance_name> -->
-* <page path="/numishare/<my_instance_name>/" model="xpl/models/config.xpl" view="oxf:/numishare-projects/<my_instance_name>/xpl/views/pages/index.xpl"/>
+* \<!-- <my_instance_name> --\>
+* \<page path="/numishare/<my_instance_name>/" model="xpl/models/config.xpl" view="oxf:/numishare-projects/<my_instance_name>/xpl/views/pages/index.xpl"/\>
 * Because it is linked, it will use /usr/local/projects/alpen/xpl/views/pages/index.xpl (no changes required here). But this will forced to use:
 * /usr/local/projects/<my_collection_name>/ui/xslt/pages/index.xsl
 * Change the above for your needs, example: add a banner image in the body section, below the header:
