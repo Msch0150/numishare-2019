@@ -23,10 +23,10 @@ wget https://github.com/Msch0150/numishare/archive/master.zip && \
 unzip master.zip && sudo chown -R 8983:8983 numishare-master/solr-home/ && \
 sudo chown 8983:8983 numishare-master/docker/core.properties && \
 cd numishare-master && \
-sudo ln -s ui default && \
+sudo ln -s ui default
 
 for COLLECTION in ${COLLECTIONS}; do
-  if [! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
+  if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
     cp -rp "$(pwd)/*" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
   fi
