@@ -65,3 +65,8 @@
 * Example:  \<img src="/themes/alpen/images/banner.jpg" style="width:100%" /\>
 * See: https://github.com/ewg118/numishare/issues/105
 * See: https://github.com/ewg118/numishare/wiki/Numishare-Themes#altering-numishare-public-ui-pages-on-a-per-project-basis (maybe outdated)
+
+## Logo
+  * Example:
+  * cp /mnt/c/Users/jhunke/Documents/joschel/forschung/numishare/alpen/logo_ulpia_03.png ~/data/docker-numishare-data/alpen/ui/images/logo.png
+  * Admin UI > <instance> > Modifiy Settings > Tiles and URLs > Logo URL > "logo.png"
