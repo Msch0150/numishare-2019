@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-# COLLECTIONS="alpen srm koeln"
+COLLECTIONS="alpen srm koeln"
 DATA_DIR=${HOME}/data
 
 # Initial setup
