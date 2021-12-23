@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Variables
-COLLECTIONS="alpen srm koeln"
+# At least numishare is required in the list below
+COLLECTIONS="numishare alpen srm koeln"
 DATA_DIR=${HOME}/data
 
 # Initial setup
