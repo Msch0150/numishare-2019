@@ -30,6 +30,7 @@ for COLLECTION in ${COLLECTIONS}; do
   if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
     sudo cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
+    cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
   fi
 done
 
