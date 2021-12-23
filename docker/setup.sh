@@ -33,7 +33,7 @@ for COLLECTION in ${COLLECTIONS}; do
   fi
 done
 
-cd docker
+cd "${DATA_DIR}/docker-numishare-data/docker"
 
 docker-compose up
 
