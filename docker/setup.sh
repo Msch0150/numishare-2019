@@ -1,8 +1,14 @@
+#!/bin/bash
+
+# Variables
+# COLLECTIONS="alpen srm koeln"
+DATA_DIR=${HOME}/data
+
 # Initial setup
-mkdir -p ${HOME}/data/docker-loris-data/images
-mkdir -p ${HOME}/data/docker-solr-data
-sudo chown -R 8983:8983 ${HOME}/data/docker-solr-data
-mkdir -p ${HOME}/data/docker-fuseki-data
+mkdir -p "${DATA_DIR}/docker-loris-data/images"
+mkdir -p "${DATA_DIR}/docker-solr-data"
+sudo chown -R 8983:8983 "${DATA_DIR}/docker-solr-data"
+mkdir -p "${DATA_DIR}/docker-fuseki-data"
 
 # Cleanup
 cd ${HOME} && \
@@ -18,6 +24,14 @@ unzip master.zip && sudo chown -R 8983:8983 numishare-master/solr-home/ && \
 sudo chown 8983:8983 numishare-master/docker/core.properties && \
 cd numishare-master && \
 sudo ln -s ui default && \
+
+for COLLECTION in ${COLLECTIONS}; do
+  if [! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
+    mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
+    cp -rp "$(pwd)/*" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
+  fi
+done
+
 cd docker
 
 docker-compose up
