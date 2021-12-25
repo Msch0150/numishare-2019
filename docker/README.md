@@ -70,3 +70,11 @@
   * Example:
   * cp /mnt/c/Users/jhunke/Documents/joschel/forschung/numishare/alpen/logo_ulpia_03.png ~/data/docker-numishare-data/alpen/ui/images/logo.png
   * Admin UI > <instance> > Modifiy Settings > Tiles and URLs > Logo URL > "logo.png"
+
+ ## Fuseki
+   * Login to fuseki (http://localhost:10208)
+   * Create a dataset (example ulpia)
+   * export "numishare" dump and void from collection (example public page, api down)
+   * Import both dumps into fuseki dataset.
+   * Numishare Admin, SPARQL Endpoint: http://fuseki:3030/ulpia/ (this is the docker internal link, the external one http://localhost:10208/uplia does not work.
+ 
