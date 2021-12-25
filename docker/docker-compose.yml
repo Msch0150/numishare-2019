@@ -58,7 +58,7 @@ services:
     image: stain/jena-fuseki
     container_name: fuseki
     volumes:
-      - ../../../../docker-fuseki-data:/fuseki
+      - ../../../../data/docker-fuseki-data:/fuseki
     ports:
       - "10208:3030"
 volumes:
