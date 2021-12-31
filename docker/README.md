@@ -78,3 +78,20 @@
    * Import both dumps into fuseki dataset.
    * Numishare Admin, SPARQL Endpoint: http://fuseki:3030/ulpia/ (this is the docker internal link, the external one http://localhost:10208/uplia does not work.
  
+## Add additional instance
+* docker exec -ti orbeon bash
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
+* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects
+* ln -s /usr/local/projects/<my_collection_name> <my_instance_name>
+* vi /usr/local/projects/numishare/page-flow.xml
+* Add to section "PUBLIC INTERFACE":
+* \<!-- <my_instance_name> --\>
+* \<page path="/numishare/<my_instance_name>/" model="xpl/models/config.xpl" view="oxf:/numishare-projects/<my_instance_name>/xpl/views/pages/index.xpl"/\>
+* Because it is linked, it will use /usr/local/projects/alpen/xpl/views/pages/index.xpl (no changes required here). But this will forced to use:
+* /usr/local/projects/<my_collection_name>/ui/xslt/pages/index.xsl
+* Change the above for your needs, example: add a banner image in the body section, below the header:
+* Example:  \<img src="http://numismatics.org/themes/ocre/images/banner.jpg" style="width:100%" /\>
+* Or on the server: cp <mysource>/banner.jpg /usr/local/projects/alpen/ui/images/ and add to the above mentioned index.xsl:
+* Example:  \<img src="/themes/alpen/images/banner.jpg" style="width:100%" /\>
+* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
+* ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
