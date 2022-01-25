@@ -95,3 +95,12 @@
 * Example:  \<img src="/themes/alpen/images/banner.jpg" style="width:100%" /\>
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 * ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
+
+## Post Numishare update tasks
+
+If numishare is updated by unzipping in ... then the configuration of the index pages need to be reconfigred.
+
+* vi /usr/local/projects/numishare/page-flow.xml
+* Add to section "PUBLIC INTERFACE":
+* \<!-- <my_instance_name> --\>
+* \<page path="/numishare/<my_instance_name>/" model="xpl/models/config.xpl" view="oxf:/numishare-projects/<my_instance_name>/xpl/views/pages/index.xpl"/\>
