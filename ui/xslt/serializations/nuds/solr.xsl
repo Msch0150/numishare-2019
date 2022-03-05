@@ -488,15 +488,15 @@
 				</xsl:if>
 
 				<xsl:choose>
-					<xsl:when test="nuds:findspot/nuds:geogname/@xlink:href">
+					<xsl:when test="nuds:findspot/nuds:fallsWithin/nuds:geogname/@xlink:href">
 						<xsl:call-template name="parse_findspot_uri">
-							<xsl:with-param name="href" select="nuds:findspot/nuds:geogname/@xlink:href"/>
-							<xsl:with-param name="label" select="nuds:findspot/nuds:geogname"/>
+							<xsl:with-param name="href" select="nuds:findspot/nuds:fallsWithin/nuds:geogname/@xlink:href"/>
+							<xsl:with-param name="label" select="nuds:findspot/nuds:fallsWithin/nuds:geogname"/>							
 						</xsl:call-template>
 					</xsl:when>
 					<xsl:otherwise>
 						<xsl:choose>
-							<xsl:when test="nuds:findspot/gml:location/gml:Point">
+							<xsl:when test="nuds:findspot/nuds:fallsWithin/gml:location/gml:Point">
 								<xsl:apply-templates select="nuds:findspot" mode="parse-gml">
 									<xsl:with-param name="objectURI" select="$objectURI"/>
 								</xsl:apply-templates>
@@ -504,7 +504,7 @@
 							<xsl:otherwise>
 								<xsl:if test="nuds:findspot">
 									<field name="findspot_facet">
-										<xsl:value-of select="nuds:findspot/nuds:geogname[@xlink:role = 'findspot']"/>
+										<xsl:value-of select="nuds:findspot/nuds:fallsWithin/nuds:geogname[@xlink:role = 'findspot']"/>
 									</field>
 								</xsl:if>
 							</xsl:otherwise>
@@ -513,18 +513,33 @@
 				</xsl:choose>
 			</xsl:otherwise>
 		</xsl:choose>
+		
+		<xsl:apply-templates select="nuds:hoard"/>
+		
+	</xsl:template>
+	
+	<xsl:template match="nuds:hoard">
+		<field name="hoard_facet">
+			<xsl:value-of select="normalize-space(.)"/>
+		</field>
+		
+		<xsl:if test="@xlink:href">
+			<field name="hoard_uri">
+				<xsl:value-of select="@xlink:href"/>
+			</field>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template match="nuds:findspot" mode="parse-gml">
 		<xsl:param name="objectURI"/>
 
-		<xsl:variable name="label" select="nuds:geogname"/>
+		<xsl:variable name="label" select="nuds:fallsWithin/nuds:geogname"/>
 		<xsl:variable name="uri" select="
-				if (nuds:geogname/@xlink:href) then
-					nuds:geogname/@xlink:href
+			if (nuds:fallsWithin/nuds:geogname/@xlink:href) then
+			nuds:fallsWithin/nuds:geogname/@xlink:href
 				else
 					concat($objectURI, '#findspot')"> </xsl:variable>
-		<xsl:variable name="coords" select="tokenize(gml:location/gml:Point/gml:coordinates, ',')"/>
+		<xsl:variable name="coords" select="tokenize(nuds:fallsWithin/gml:location/gml:Point/gml:coordinates, ',')"/>
 
 		<field name="findspot_facet">
 			<xsl:value-of select="$label"/>
@@ -653,6 +668,24 @@
 					</xsl:for-each>
 				</xsl:if>
 			</xsl:when>
+			<xsl:when test="contains($href, 'wikidata.org')">
+				<field name="findspot_facet">
+					<xsl:value-of select="$label"/>
+				</field>
+				<field name="findspot_uri">
+					<xsl:value-of select="$href"/>
+				</field>
+				<xsl:if test="nuds:findspot/nuds:fallsWithin/gml:location/gml:Point">
+					<field name="findspot_geo">
+						<xsl:value-of select="$label"/>
+						<xsl:text>|</xsl:text>
+						<xsl:value-of select="$href"/>
+						<xsl:text>|</xsl:text>
+						<xsl:value-of select="nuds:findspot/nuds:fallsWithin/gml:location/gml:Point/gml:coordinates"/>
+					</field>
+				</xsl:if>
+				
+			</xsl:when>
 		</xsl:choose>
 	</xsl:template>
 
@@ -663,6 +696,8 @@
 	</xsl:template>
 
 	<xsl:template match="mets:fileSec">
+		
+		<!-- handle standard photographs -->
 		<xsl:for-each select="mets:fileGrp[@USE = 'obverse' or @USE = 'reverse' or @USE = 'combined']">
 			<xsl:variable name="side" select="substring(@USE, 1, 3)"/>
 
@@ -688,7 +723,34 @@
 			</xsl:choose>
 
 		</xsl:for-each>
+		
+		<!-- otherwise, apply a template to the first fileGrp for a card and index the recto of the first file -->
+		<xsl:apply-templates select="mets:fileGrp[@USE = 'card'][1]/mets:fileGrp[@USE = 'recto']"/>
+		
 		<field name="imagesavailable">true</field>
+	</xsl:template>
+	
+	<xsl:template match="mets:fileGrp[@USE = 'recto']">
+		<xsl:choose>
+			<xsl:when test="count(mets:file) = 1 and mets:file[@USE = 'iiif']">
+				<field name="iiif_com">
+					<xsl:value-of select="mets:file/mets:FLocat/@xlink:href"/>
+				</field>
+				<field name="thumbnail_com">
+					<xsl:value-of select="concat(mets:file/mets:FLocat/@xlink:href, '/full/,120/0/default.jpg')"/>
+				</field>
+				<field name="reference_com">
+					<xsl:value-of select="concat(mets:file/mets:FLocat/@xlink:href, '/full/400,/0/default.jpg')"/>
+				</field>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:for-each select="mets:file[@USE = 'iiif' or @USE = 'archive' or @USE = 'thumbnail' or @USE = 'reference']">
+					<field name="{@USE}_com">
+						<xsl:value-of select="mets:FLocat/@xlink:href"/>
+					</field>
+				</xsl:for-each>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 
 	<xsl:template match="nuds:physDesc">
@@ -782,7 +844,7 @@
 	</xsl:template>
 
 	<xsl:template match="nuds:measurementsSet">
-		<xsl:for-each select="*">
+		<xsl:for-each select="*[not(self::nuds:specificGravity)]">
 			<xsl:if test="number(.)">
 				<field name="{local-name()}_num">
 					<xsl:value-of select="normalize-space(.)"/>
