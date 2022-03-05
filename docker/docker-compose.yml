@@ -38,7 +38,7 @@ services:
       - solr-precreate
       - numishare
   exist:
-    image: existdb/existdb:5.2.0
+    image: existdb/existdb:6.0.1
     container_name: exist
     ports:
       - 10204:8080
