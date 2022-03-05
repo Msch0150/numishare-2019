@@ -18,7 +18,7 @@
 ## Post install tasks
 * docker exec -ti orbeon bash
 * apt-get install telnet
-* NOT REQUIRED cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
 * Access admin interface > http://localhost:10200/orbeon/numishare/admin/
 * Add new collection:
 *  Tomcat Role: <my_instance_name>
@@ -52,6 +52,7 @@
 * docker exec -ti orbeon bash
 * mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
 * vi /usr/local/projects/numishare/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
