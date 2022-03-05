@@ -8,13 +8,6 @@
 * Open terminal
 * Copy and Paste content of setup.sh in terminal
 
-## OLD SECTION Create default link for themes
-
-* required to load the javascripts for supporting iiif.
-* 
-* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare; ln -s /usr/local/projects/numishare/ui default
-* Change in admin interface > Modify Settings > Themes and layout http://localhost:8081/orbeon/numishare/
-
 ## Post install tasks
 * docker exec -ti orbeon bash
 * apt-get install telnet
