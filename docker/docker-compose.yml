@@ -45,6 +45,7 @@ services:
       - 10205:8443
     volumes:
       - "..:/usr/local/projects/numishare"
+      - "./jetty.xml:/exist/etc/jetty/jetty.xml"
       - ../../../../data/docker-exist-data:/exist/data
   iiif:
     image: lorisimageserver/loris
