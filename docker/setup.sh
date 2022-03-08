@@ -2,7 +2,7 @@
 
 # Variables
 # At least numishare is required in the list below
-COLLECTIONS="numishare alpen srm koeln"
+COLLECTIONS="numishare alpen srm koeln rct"
 DATA_DIR=${HOME}/data
 
 # Initial setup
