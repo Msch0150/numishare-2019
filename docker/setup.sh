@@ -5,6 +5,10 @@
 COLLECTIONS="numishare alpen srm koeln rct"
 DATA_DIR=${HOME}/data
 
+
+# preparations
+sudo apt install unzip
+
 # Initial setup
 mkdir -p "${DATA_DIR}/docker-loris-data/images"
 mkdir -p "${DATA_DIR}/docker-solr-data"
