@@ -3,7 +3,7 @@
 	Author: Ethan Gruber
 	Function: this XSLT stylesheet is included into display.xsl.  It contains shared templates and functions that may be used in object-
 	specific stylesheets. Includes templates for bibliographies in MODS and TEI/EpiDoc extensions
-	Modification date: 2018
+	Modification date: 2022
 -->
 <xsl:stylesheet xmlns:nuds="http://nomisma.org/nuds" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:numishare="https://github.com/ewg118/numishare"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
@@ -124,6 +124,25 @@
 							<xsl:value-of select="nuds:description[1]"/>
 						</xsl:otherwise>
 					</xsl:choose>
+				</xsl:otherwise>
+			</xsl:choose>
+		</li>
+	</xsl:template>
+
+	<!-- enable handling of TEI EpiDoc in legend, if applicable -->
+	<xsl:template match="nuds:legend" mode="descMeta">
+		<li>
+			<b>
+				<xsl:value-of select="numishare:regularize_node(local-name(), $lang)"/>
+				<xsl:text>: </xsl:text>
+			</b>
+			<xsl:choose>
+				<xsl:when test="child::tei:div">
+					<xsl:apply-templates select="tei:div[@type = 'edition']" mode="legend"/>
+					<xsl:apply-templates select="tei:div[@type = 'transliteration']" mode="legend"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:apply-templates/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</li>
@@ -806,6 +825,7 @@
 			<xsl:with-param name="uri" select="@rdf:about"/>
 		</xsl:apply-templates>
 
+		<!-- constituent letters -->
 		<xsl:if test="crm:P106_is_composed_of">
 			<xsl:text>, consists of </xsl:text>
 			<xsl:for-each select="crm:P106_is_composed_of">
@@ -818,6 +838,12 @@
 					<xsl:text>,</xsl:text>
 				</xsl:if>
 			</xsl:for-each>
+		</xsl:if>
+		
+		<!-- Unicode characters -->
+		<xsl:if test="crm:P165i_is_incorporated_in[string(.) and not(child::*)]">
+			<xsl:text>, represents </xsl:text>
+			<xsl:value-of select="crm:P165i_is_incorporated_in[string(.) and not(child::*)]"/>
 		</xsl:if>
 	</xsl:template>
 
@@ -881,30 +907,29 @@
 		<xsl:variable name="subtypeId" select="@recordId"/>
 		<xsl:variable name="objectUri" select="concat($uri_space, $subtypeId)"/>
 
-		<div class="row">
-			<div class="col-md-3" about="{$objectUri}" typeof="nmo:TypeSeriesItem">
-				<h4 property="skos:prefLabel">
-					<a href="{$objectUri}">
-						<xsl:value-of select="nuds:descMeta/nuds:title"/>
-					</a>
-				</h4>
+		<tr about="{$objectUri}" typeof="nmo:TypeSeriesItem">
+			<td>
+				<a href="{$objectUri}" property="skos:prefLabel">
+					<xsl:value-of select="nuds:descMeta/nuds:title"/>
+				</a>
 				<span class="hidden" property="skos:broader">
 					<xsl:value-of select="concat($uri_space, $id)"/>
 				</span>
-				<ul>
-					<xsl:apply-templates select="nuds:descMeta/*[not(local-name() = 'title')]"/>
+			</td>
+			<td>
+				<ul style="padding:0">
+					<xsl:apply-templates select="nuds:descMeta/nuds:typeDesc/nuds:obverse/*" mode="descMeta"/>
 				</ul>
-			</div>
-			<div class="col-md-9">
-				<xsl:apply-templates select="document(concat($request-uri, 'apis/type-examples?id=', $subtypeId))/res:sparql" mode="type-examples">
-					<xsl:with-param name="subtype" select="true()" as="xs:boolean"/>
-					<xsl:with-param name="objectUri" select="$objectUri"/>
-					<xsl:with-param name="endpoint" select="$endpoint"/>
-					<xsl:with-param name="rtl" select="$rtl"/>
-				</xsl:apply-templates>
-			</div>
-		</div>
-		<hr/>
+			</td>
+			<td>
+				<ul style="padding:0">
+					<xsl:apply-templates select="nuds:descMeta/nuds:typeDesc/nuds:reverse/*" mode="descMeta"/>
+				</ul>
+			</td>
+			<td>
+				<xsl:apply-templates select="doc('input:numishareResults')//group[@id = $subtypeId]" mode="results"/>
+			</td>
+		</tr>
 	</xsl:template>
 
 	<!-- *************** RDF TEMPLATES ******************-->
@@ -1163,6 +1188,16 @@
 		</li>
 	</xsl:template>
 
+	<xsl:template match="tei:div[@type = 'edition']" mode="legend">
+		<xsl:apply-templates/>
+	</xsl:template>
+
+	<xsl:template match="tei:div[@type = 'transliteration']" mode="legend">
+		<xsl:text> [transliteration:</xsl:text>
+		<xsl:apply-templates/>
+		<xsl:text>]</xsl:text>
+	</xsl:template>
+
 	<xsl:template match="tei:p">
 		<p>
 			<xsl:apply-templates/>
@@ -1196,6 +1231,15 @@
 		</a>
 	</xsl:template>
 
+	<xsl:template match="tei:ab">
+		<xsl:apply-templates/>
+		<xsl:if test="@rend">
+			<xsl:text> (orientation: </xsl:text>
+			<xsl:value-of select="@rend"/>
+			<xsl:text>)</xsl:text>
+		</xsl:if>
+	</xsl:template>
+
 	<xsl:template match="tei:gap">
 		<xsl:text>[gap: </xsl:text>
 		<i>
@@ -1203,6 +1247,50 @@
 		</i>
 		<xsl:text>]</xsl:text>
 	</xsl:template>
+
+	<xsl:template match="tei:space">
+		<xsl:text>[intentional space]</xsl:text>
+	</xsl:template>
+
+	<!-- rendering -->
+	<xsl:template match="tei:hi[@rend]">
+		<xsl:choose>
+			<xsl:when test="@rend = 'ligature'">
+				<xsl:call-template name="ligaturizeText">
+					<xsl:with-param name="textLigaturize" select="normalize-space(.)"/>
+				</xsl:call-template>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:value-of select="."/>
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
+
+	<!-- template from EpiDoc: https://github.com/EpiDoc/Stylesheets/blob/master/teihi.xsl -->
+	<xsl:template name="ligaturizeText">
+		<xsl:param name="textLigaturize"/>
+		<xsl:analyze-string select="$textLigaturize" regex="\p{{L}}">
+			<!-- select letters only (will omit combining chars) -->
+			<xsl:matching-substring>
+				<xsl:choose>
+					<xsl:when test="position() = 1">
+						<!-- skip first ligatured char -->
+						<xsl:value-of select="."/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:text>&#x0361;</xsl:text>
+						<!-- emit ligature combining char -->
+						<xsl:value-of select="."/>
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:matching-substring>
+			<xsl:non-matching-substring>
+				<xsl:value-of select="."/>
+			</xsl:non-matching-substring>
+		</xsl:analyze-string>
+	</xsl:template>
+
+
 
 	<!-- complex symbols and monograms encoded in EpiDoc -->
 	<xsl:template match="tei:div" mode="symbols">
@@ -1252,6 +1340,10 @@
 		</xsl:if>
 	</xsl:template>
 
+	<xsl:template match="tei:space" mode="symbols">
+		<xsl:text>[no monogram]</xsl:text>
+	</xsl:template>
+
 	<xsl:template match="tei:seg | tei:am | tei:g" mode="symbols">
 		<xsl:param name="field"/>
 		<xsl:param name="side"/>
@@ -1277,7 +1369,7 @@
 
 
 
-		<xsl:if test="self::tei:g and starts-with(@ref, 'http://numismatics.org')">
+		<xsl:if test="self::tei:g and matches(@ref, '^https?://numismatics\.org')">
 			<xsl:variable name="href" select="@ref"/>
 			<xsl:apply-templates select="$rdf/*[@rdf:about = $href]"/>
 

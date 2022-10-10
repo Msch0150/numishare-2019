@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Copyright (C) 2010 Ethan Gruber
-	EADitor: https://github.com/ewg118/eaditor
-	Apache License 2.0: https://github.com/ewg118/eaditor
-	
+	Author: Ethan Gruber
+	Date modified: June 2022
+	Function: Execute a general Solr query to /feed requestHandler to include subtypes in the CSV export
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors">
 
@@ -48,8 +47,18 @@
 						</xsl:when>
 					</xsl:choose>
 				</xsl:param>		
-				<xsl:param name="sort" select="doc('input:request')/request/parameters/parameter[name='sort']/value"/>
-				<xsl:param name="rows">1000</xsl:param>
+				
+				<xsl:param name="sort">
+					<xsl:choose>
+						<xsl:when test="string(doc('input:request')/request/parameters/parameter[name='sort']/value)">
+							<xsl:value-of select="doc('input:request')/request/parameters/parameter[name='sort']/value"/>
+						</xsl:when>
+						<xsl:otherwise>sortid asc</xsl:otherwise>
+					</xsl:choose>
+				</xsl:param>
+				
+				<xsl:param name="rows">5000</xsl:param>
+				
 				<xsl:param name="start">
 					<xsl:choose>
 						<xsl:when test="string(doc('input:request')/request/parameters/parameter[name='start']/value)">
@@ -59,7 +68,7 @@
 					</xsl:choose>
 				</xsl:param>
 				<!-- config variables -->
-				<xsl:variable name="solr-url" select="concat(/config/solr_published, 'select/')"/>
+				<xsl:variable name="solr-url" select="concat(/config/solr_published, 'feed/')"/>
 				
 
 				<xsl:variable name="service">
@@ -67,20 +76,20 @@
 						<xsl:when test="string($q)">
 							<xsl:choose>
 								<xsl:when test="string($lang)">
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+', encode-for-uri($q), '&amp;rows=', $rows, '&amp;start=', $start)"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '+AND+', encode-for-uri($q), '&amp;rows=', $rows, '&amp;start=', $start, '&amp;sort=', encode-for-uri($sort))"/>
 								</xsl:when>
 								<xsl:otherwise>
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+', encode-for-uri($q), '&amp;rows=', $rows, '&amp;start=', $start)"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)+AND+', encode-for-uri($q), '&amp;rows=', $rows, '&amp;start=', $start, '&amp;sort=', encode-for-uri($sort))"/>
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:when>
 						<xsl:otherwise>
 							<xsl:choose>
 								<xsl:when test="string($lang)">
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '&amp;rows=', $rows, '&amp;start=', $start)"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+lang:', $lang, '&amp;rows=', $rows, '&amp;start=', $start, '&amp;sort=', encode-for-uri($sort))"/>
 								</xsl:when>
 								<xsl:otherwise>
-									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)&amp;rows=', $rows, '&amp;start=', $start)"/>
+									<xsl:value-of select="concat($solr-url, '?q=collection-name:', $collection-name, '+AND+NOT(lang:*)&amp;rows=', $rows, '&amp;start=', $start, '&amp;sort=', encode-for-uri($sort))"/>
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:otherwise>

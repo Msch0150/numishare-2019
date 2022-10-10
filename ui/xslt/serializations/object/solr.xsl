@@ -106,9 +106,19 @@
 	<!-- get subtypes -->
 	<xsl:variable name="subtypes" as="element()*">
 		<xsl:if test="//config/collection_type = 'cointype' and ($index_subtype_metadata = true() or $index_subtypes_as_references = true())">
-			<xsl:if test="doc-available(concat($request-uri, '/get_subtypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))">
+			<xsl:if test="doc-available(concat($request-uri, '/apis/getSubtypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))">
 				<xsl:copy-of
-					select="document(concat($request-uri, '/get_subtypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))/*"/>
+					select="document(concat($request-uri, '/apis/getSubtypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))/*"/>
+			</xsl:if>
+		</xsl:if>
+	</xsl:variable>
+	
+	<!-- execute SPARQL query for acquiring lists of coin types associated with each die for a die collection -->
+	<xsl:variable name="die-types" as="element()*">
+		<xsl:if test="$collection-type = 'die'">
+			<xsl:if test="doc-available(concat($request-uri, '/apis/getDieTypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))">
+				<xsl:copy-of
+					select="document(concat($request-uri, '/apis/getDieTypes?identifiers=', encode-for-uri(string-join(descendant::nuds:recordId, '|'))))/*"/>
 			</xsl:if>
 		</xsl:if>
 	</xsl:variable>
@@ -173,8 +183,8 @@
 			<!-- perform an RDF request for each distinct monogram/symbol URI -->
 			<xsl:for-each
 				select="
-					distinct-values($nudsGroup/descendant::nuds:symbol[contains(@xlink:href, 'http://numismatics.org')]/@xlink:href | $nudsGroup/descendant::nuds:symbol/descendant::tei:g[contains(@ref, 'http://numismatics.org')]/@ref |
-					$subtypes/descendant::nuds:symbol[contains(@xlink:href, 'http://numismatics.org')]/@xlink:href | $subtypes/descendant::nuds:symbol/descendant::tei:g[contains(@ref, 'http://numismatics.org')]/@ref)">
+				distinct-values($nudsGroup/descendant::nuds:symbol[matches(@xlink:href, 'https?://numismatics\.org')]/@xlink:href | $nudsGroup/descendant::nuds:symbol/descendant::tei:g[matches(@ref, 'https?://numismatics\.org')]/@ref |
+				$subtypes/descendant::nuds:symbol[matches(@xlink:href, 'https?://numismatics\.org')]/@xlink:href | $subtypes/descendant::nuds:symbol/descendant::tei:g[matches(@ref, 'https?://numismatics\.org')]/@ref)">
 				<xsl:variable name="href" select="."/>
 
 				<xsl:if test="doc-available(concat($href, '.rdf'))">

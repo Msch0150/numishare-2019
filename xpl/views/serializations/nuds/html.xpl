@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 	Author: Ethan Gruber
-	Last modified: November 2020
+	Last modified: June 2022
 	Function: HTML view for NUDS. It involves conditionals for conceptual vs. physical specimens, 
 		including SPARQL queries for associated specimens and annoations.
 		July 2018: added type-examples.xpl into this XPL in order to avoid xsl:document() function call to /api pipeline within the XSLT
 		October-November 2020: Added support for die studies
+		June 2022: Moved subtype XQuery into XPL and associated numishareResults SPARQL query for example specimens
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors" xmlns:res="http://www.w3.org/2005/sparql-results#" xmlns:saxon="http://saxon.sf.net/">
 	<p:param type="input" name="data"/>
@@ -112,9 +113,17 @@
 						</p:processor>
 					</p:for-each>
 					
+					<!-- get a list of associated coin type URIs -->
+					<p:processor name="oxf:pipeline">						
+						<p:input name="data" href="#config"/>
+						<p:input name="config" href="../../../models/sparql/getDieTypes.xpl"/>
+						<p:output name="data" id="die-types"/>
+					</p:processor>
+					
 					<p:processor name="oxf:unsafe-xslt">
 						<p:input name="request" href="#request"/>
 						<p:input name="specimens" href="#specimens"/>
+						<p:input name="die-types" href="#die-types"/>
 						<p:input name="dies" href="aggregate('dies', #obv-dies, #rev-dies)"/>
 						<p:input name="query" href="#die-examples-query-document"/>
 						<p:input name="data" href="aggregate('content', #data, #specimenCount, #config)"/>
@@ -151,6 +160,27 @@
 				<p:output name="data" id="hasDies"/>
 			</p:processor>
 			
+			<!-- execute XQuery to get subtypes -->
+			<p:processor name="oxf:pipeline">						
+				<p:input name="data" href="#config"/>
+				<p:input name="config" href="../../../models/xquery/get-subtypes.xpl"/>
+				<p:output name="data" id="subtypes"/>
+			</p:processor>
+			
+			<!-- execute the Numishare Results SPARQL query for subtypes -->
+			<p:processor name="oxf:pipeline">
+				<p:input name="data" href="#subtypes"/>
+				<p:input name="config" href="../../../models/sparql/numishareResults.xpl"/>
+				<p:output name="data" id="subtype-sparqlResults"/>
+			</p:processor>
+			
+			<!-- serialize aggregated SPARQL model for subtypes -->
+			<p:processor name="oxf:pipeline">
+				<p:input name="data" href="#subtype-sparqlResults"/>
+				<p:input name="config" href="../../../views/serializations/sparql/numishareResults.xpl"/>
+				<p:output name="data" id="numishareResults"/>
+			</p:processor>
+			
 			<!-- if hasDies is true, then submit a SPARQL query for the die links in order to generate an HTML chart.
 				This is the same query for the d3plus forced network graph, but serialized differently -->
 			<p:choose href="#hasDies">
@@ -183,7 +213,7 @@
 				</p:otherwise>
 			</p:choose>
 			
-			<!-- load SPARQL query from disk -->
+			<!-- load type examples SPARQL query from disk -->
 			<p:processor name="oxf:url-generator">
 				<p:input name="config">
 					<config>
@@ -201,6 +231,26 @@
 					<config/>
 				</p:input>
 				<p:output name="data" id="type-examples-query-document"/>
+			</p:processor>
+			
+			<!-- load die frequencies SPARQL query from disk -->
+			<p:processor name="oxf:url-generator">
+				<p:input name="config">
+					<config>
+						<url>oxf:/apps/numishare/ui/sparql/die-frequencies.sparql</url>
+						<content-type>text/plain</content-type>
+						<encoding>utf-8</encoding>
+					</config>
+				</p:input>
+				<p:output name="data" id="die-frequencies-query"/>
+			</p:processor>
+			
+			<p:processor name="oxf:text-converter">
+				<p:input name="data" href="#die-frequencies-query"/>
+				<p:input name="config">
+					<config/>
+				</p:input>
+				<p:output name="data" id="die-frequencies-query-document"/>
 			</p:processor>
 			
 			<p:choose href="#config">
@@ -263,7 +313,10 @@ ASK {?s oa:hasBody <URI>}]]>
 										<p:input name="hasIIIF" href="#hasIIIF"/>
 										<p:input name="hasDies" href="#hasDies"/>
 										<p:input name="dies" href="#dies"/>
+										<p:input name="subtypes" href="#subtypes"/>
+										<p:input name="numishareResults" href="#numishareResults"/>
 										<p:input name="query" href="#type-examples-query-document"/>
+										<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 										<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 										<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 										<p:output name="data" id="model"/>
@@ -282,7 +335,10 @@ ASK {?s oa:hasBody <URI>}]]>
 										<p:input name="hasDies" href="#hasDies"/>
 										<p:input name="dies" href="#dies"/>
 										<p:input name="specimens" href="#specimens"/>
+										<p:input name="subtypes" href="#subtypes"/>
+										<p:input name="numishareResults" href="#numishareResults"/>
 										<p:input name="query" href="#type-examples-query-document"/>
+										<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 										<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 										<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 										<p:output name="data" id="model"/>
@@ -305,7 +361,10 @@ ASK {?s oa:hasBody <URI>}]]>
 										<p:input name="hasIIIF" href="#hasIIIF"/>
 										<p:input name="hasDies" href="#hasDies"/>
 										<p:input name="dies" href="#dies"/>
+										<p:input name="subtypes" href="#subtypes"/>		
+										<p:input name="numishareResults" href="#numishareResults"/>
 										<p:input name="query" href="#type-examples-query-document"/>
+										<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 										<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 										<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 										<p:output name="data" id="model"/>
@@ -325,7 +384,10 @@ ASK {?s oa:hasBody <URI>}]]>
 										<p:input name="dies" href="#dies"/>
 										<p:input name="annotations" href="#annotations"/>
 										<p:input name="specimens" href="#specimens"/>
+										<p:input name="subtypes" href="#subtypes"/>
+										<p:input name="numishareResults" href="#numishareResults"/>
 										<p:input name="query" href="#type-examples-query-document"/>
+										<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 										<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 										<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 										<p:output name="data" id="model"/>
@@ -343,7 +405,10 @@ ASK {?s oa:hasBody <URI>}]]>
 								<p:input name="hasIIIF" href="#hasIIIF"/>
 								<p:input name="hasDies" href="#hasDies"/>
 								<p:input name="dies" href="#dies"/>
+								<p:input name="subtypes" href="#subtypes"/>
+								<p:input name="numishareResults" href="#numishareResults"/>
 								<p:input name="query" href="#type-examples-query-document"/>
+								<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 								<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 								<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 								<p:output name="data" id="model"/>
@@ -361,8 +426,11 @@ ASK {?s oa:hasBody <URI>}]]>
 								<p:input name="hasIIIF" href="#hasIIIF"/>
 								<p:input name="hasDies" href="#hasDies"/>
 								<p:input name="specimens" href="#specimens"/>
+								<p:input name="subtypes" href="#subtypes"/>
+								<p:input name="numishareResults" href="#numishareResults"/>
 								<p:input name="dies" href="#dies"/>
 								<p:input name="query" href="#type-examples-query-document"/>
+								<p:input name="die-frequencies-query" href="#die-frequencies-query-document"/>
 								<p:input name="data" href="aggregate('content', #data, #specimenCount, #hasFindspots, #config)"/>
 								<p:input name="config" href="../../../../ui/xslt/serializations/nuds/html.xsl"/>
 								<p:output name="data" id="model"/>

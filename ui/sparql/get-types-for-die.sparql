@@ -1,15 +1,15 @@
-PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX nm: <http://nomisma.org/id/>
 PREFIX nmo: <http://nomisma.org/ontology#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT (count(?coin) as ?count) WHERE {
-    GRAPH <graphURI> {
-	{?coin nmo:hasObverse/nmo:hasDie ?die}
-	UNION {?coin nmo:hasReverse/nmo:hasDie ?die}
- 	?die rdf:value <dieURI> }
-}
+SELECT DISTINCT ?type ?label WHERE {  	
+    GRAPH <%graphURI%> {
+      {?object nmo:hasObverse/nmo:hasDie/rdf:value <%dieURI%>}
+      UNION {?object nmo:hasReverse/nmo:hasDie/rdf:value <%dieURI%>}
+    }
+    ?object nmo:hasTypeSeriesItem ?type .
+    ?type skos:prefLabel ?label
+} 

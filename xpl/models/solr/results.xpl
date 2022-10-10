@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Copyright (C) 2010 Ethan Gruber
-	EADitor: https://github.com/ewg118/eaditor
-	Apache License 2.0: https://github.com/ewg118/eaditor
-	
+	Author: Ethan Gruber
+	Function: Execute a general Solr query to /select requestHandler	
 -->
 <p:config xmlns:p="http://www.orbeon.com/oxf/pipeline" xmlns:oxf="http://www.orbeon.com/oxf/processors">
 
@@ -100,8 +98,10 @@
 					<xsl:choose>
 						<xsl:when test="/config/collection_type = 'hoard'"
 							>id,recordId,recordType,title_display,findspot_display,closing_date_display,deposit_display,discovery_display,description_display,reference_facet</xsl:when>
-						<xsl:when test="/config/collection_type = 'cointype' or /config/collection_type = 'die'"
-							>id,recordId,recordType,title_display,date_display,denomination_facet,mint_facet,obv_leg_display,obv_type_display,rev_leg_display,rev_type_display,reference_facet,uri_space</xsl:when>
+						<xsl:when test="/config/collection_type = 'cointype'"
+							>id,recordId,recordType,title_display,date_display,denomination_facet,mint_facet,productionPlace_facet,obv_leg_display,obv_type_display,rev_leg_display,rev_type_display,reference_facet,uri_space</xsl:when>
+						<xsl:when test="/config/collection_type = 'die'"
+							>id,recordId,recordType,title_display,date_display,reference_facet,relatedType_facet,symbol_facet,uri_space</xsl:when>
 						<xsl:when test="/config/collection_type = 'object'"
 							>id,recordId,recordType,title_display,date_display,denomination_facet,mint_facet,productionPlace_facet,obv_leg_display,obv_type_display,rev_leg_display,rev_type_display,reference_facet,provenance_facet,diameter_num,weight_num,imagesavailable,reference_obv,reference_rev,thumbnail_obv,thumbnail_rev,reference_com,thumbnail_com</xsl:when>
 					</xsl:choose>

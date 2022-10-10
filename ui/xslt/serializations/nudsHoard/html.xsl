@@ -140,12 +140,8 @@
 		</nudsGroup>
 	</xsl:variable>
 
-	<!-- get subtypes -->
-	<xsl:variable name="subtypes" as="element()*">
-		<xsl:if test="$recordType = 'conceptual' and //config/collection_type = 'cointype'">
-			<xsl:copy-of select="document(concat($request-uri, 'get_subtypes?identifiers=', $id))/*"/>
-		</xsl:if>
-	</xsl:variable>
+	<!-- empty subtypes  -->
+	<xsl:variable name="subtypes" as="element()*"/>
 
 	<!-- get the facets as a sequence -->
 	<xsl:variable name="facets" select="//config/facets/facet"/>
@@ -207,8 +203,8 @@
 			<!-- these individual RDF calls should be replaced with the getRDF API when many symbols might appear in one hoard -->
 			<xsl:for-each
 				select="
-					distinct-values($nudsGroup/descendant::nuds:symbol[contains(@xlink:href, 'http://numismatics.org')]/@xlink:href | $nudsGroup/descendant::nuds:symbol/descendant::tei:g[contains(@ref, 'http://numismatics.org')]/@ref |
-					$subtypes/descendant::nuds:symbol[contains(@xlink:href, 'http://numismatics.org')]/@xlink:href | $subtypes/descendant::nuds:symbol/descendant::tei:g[contains(@ref, 'http://numismatics.org')]/@ref)">
+				distinct-values($nudsGroup/descendant::nuds:symbol[matches(@xlink:href, 'https?://numismatics\.org')]/@xlink:href | $nudsGroup/descendant::nuds:symbol/descendant::tei:g[matches(@ref, 'https?://numismatics\.org')]/@ref |
+				$subtypes/descendant::nuds:symbol[matches(@xlink:href, 'https?://numismatics\.org')]/@xlink:href | $subtypes/descendant::nuds:symbol/descendant::tei:g[matches(@ref, 'https?://numismatics\.org')]/@ref)">
 				<xsl:variable name="href" select="."/>
 
 				<xsl:if test="doc-available(concat($href, '.rdf'))">
@@ -428,7 +424,7 @@
 
 		<div class="row">
 			<div class="col-md-12">
-				<h1 property="dcterms:title">
+				<h1 property="skos:prefLabel">
 					<xsl:if test="string(nh:descMeta/nh:title/@xml:lang)">
 						<xsl:attribute name="lang" select="nh:descMeta/nh:title/@xml:lang"/>
 					</xsl:if>
@@ -441,6 +437,16 @@
 						</xsl:otherwise>
 					</xsl:choose>
 				</h1>
+				
+				<p>
+					<strong>Canonical URI: </strong>
+					<code>
+						<a href="{$objectUri}" title="{$objectUri}">
+							<xsl:value-of select="$objectUri"/>
+						</a>
+					</code>
+				</p>
+				
 				<xsl:if test="$hasSpecimens = true()">
 					<a href="#examples">Coins from this Hoard</a>
 				</xsl:if>
