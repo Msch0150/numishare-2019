@@ -6,6 +6,13 @@ ENV CATALINA_HOME=/usr/local/tomcat
 ENV TEMP_DIR=/var/tmp
 ENV ProjectsDir=/usr/local/projects
 
+### Install tools
+
+RUN apt-get update && apt-get install -y \
+  unzip \
+  vim \
+  telnet
+
 ### Download Orbeon
 
 RUN cd ${TEMP_DIR} && \
@@ -26,10 +33,3 @@ RUN cd ${TEMP_DIR}/orbeon-${OrbeonTag}.${OrbeonDateString}-$(echo ${OrbeonReleas
     rm orbeon.war && \
     cd .. && \
     mv orbeon-${OrbeonTag}.${OrbeonDateString}-$(echo ${OrbeonRelease} | tr /a-z/ /A-Z/) ${CATALINA_HOME}/webapps/orbeon
-    
-
-### Install vim/vi
-
-RUN apt-get update && \
-    apt-get install vim -y \
-    apt-get install telnet -y
