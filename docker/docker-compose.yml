@@ -14,7 +14,7 @@ services:
     ports:
       - "10200:8080"
     environment:
-      JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:MaxPermSize=256m -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled'
+      JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties'
     volumes:
       - "./orbeon.xml:/usr/local/tomcat/conf/Catalina/localhost/orbeon.xml"
       - "../..:/usr/local/projects"
