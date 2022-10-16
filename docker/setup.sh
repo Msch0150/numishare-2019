@@ -48,6 +48,6 @@ docker-compose up
 # Solr     : http://localhost:10202/
 # Exist DB : http://localhost:10204
 # Loris    : http://localhost:10206/
-# Fuseki   : http://localhost:10208/  (username:password displayed in console of Docker)
+# Fuseki   : http://localhost:10208/  (username:password displayed in console of Docker or in /fuseki/shiro.ini in section [users])
 # Apache   : http://localhost
 
