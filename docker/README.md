@@ -47,7 +47,7 @@
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects
 * cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
-* vi /usr/local/projects/numishare/page-flow.xml
+* vi /usr/local/projects/alpen/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
 * \<!-- <my_instance_name> --\>
 * \<page path="/numishare/<my_instance_name>/" model="xpl/models/config.xpl" view="oxf:/numishare-projects/<my_instance_name>/xpl/views/pages/index.xpl"/\>
