@@ -70,7 +70,7 @@
    * Create a dataset (example ulpia)
    * export "numishare" dump and void from collection (example public page, api down)
    * Import both dumps into fuseki dataset.
-   * Numishare Admin, SPARQL Endpoint: http://fuseki:3030/ulpia/ (this is the docker internal link, the external one http://localhost:10208/uplia does not work.
+   * Numishare Admin, SPARQL Endpoint: http://fuseki:3030/ulpia/ (this is the docker internal link, the external one http://localhost:10208/ulpia does not work.
  
 ## Add additional instance
 * docker exec -ti orbeon bash
