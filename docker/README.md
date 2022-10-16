@@ -38,7 +38,7 @@
 
 ## Post Installation Tasks Fuseki (required for cointype)
 
-* Login to fuseki http://localhost:10208/ (username/password is displayed in startup console) and create a dataset "nomisma".
+* Login to fuseki http://localhost:10208/ (username/password is displayed in startup console or in /fuseki/shiro.ini) and create a dataset "nomisma".
 
 ## Post Installation Tasks for multiple instances 
 
