@@ -45,7 +45,7 @@
 * docker exec -ti orbeon bash
 * mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
-* ### Might a link be enogh for the following?
+* # Might a link be enogh for the following?
 * cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/\<my_instance_name\>
 * # Try: cd /usr/local/projects && ln -s /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare numishare
 * # Try: required directories for instances: /usr/local/projects/\<my_instance_name\>/ui/images/
@@ -54,7 +54,7 @@
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
 * cd /usr/local/projects/
 * ln -s /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare numishare
-* ####vi /usr/local/projects/<my_collection_name>/page-flow.xml
+* # vi /usr/local/projects/<my_collection_name>/page-flow.xml
 * vi /usr/local/projects/numishare/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
 * \<!-- <my_instance_name> --\>
