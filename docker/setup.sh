@@ -54,6 +54,10 @@ for COLLECTION in ${COLLECTIONS}; do
   echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${MAIN}/docker/httpd.conf"
 done
 
+if [ -f "${DATA_DIR}/page-flow.xml" ]; then
+    echo '      - "'${DATA_DIR}'/page-flow.xml:/usr/local/projects/numishare/page-flow.xml"' >> "${MAIN}/docker/docker-compose.yml"
+fi
+
 cd "${MAIN}/docker"
 
 echo "Use $(pwd) for docker startup and shutdown"
