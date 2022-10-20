@@ -55,7 +55,7 @@ for COLLECTION in ${COLLECTIONS}; do
 done
 
 if [ -f "${DATA_DIR}/page-flow.xml" ]; then
-    echo '      - "'${DATA_DIR}'/page-flow.xml:/usr/local/projects/numishare/page-flow.xml"' >> "${MAIN}/docker/docker-compose.yml"
+    echo '      - "'${DATA_DIR}'/page-flow.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml"' >> "${MAIN}/docker/docker-compose.yml"
 fi
 
 cd "${MAIN}/docker"
