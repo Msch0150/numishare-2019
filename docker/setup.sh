@@ -33,14 +33,14 @@ sudo ln -s ui default
 for COLLECTION in ${COLLECTIONS}; do
   if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
-    sudo cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
+    cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
     cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
   fi
 done
 
 cd "${DATA_DIR}/docker-numishare-data/numishare/docker"
 
-docker-compose up
+docker compose up
 
 # Using the current docker-compose.xml you might want to try:
 #
