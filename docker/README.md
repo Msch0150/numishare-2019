@@ -98,7 +98,7 @@
 * Change the above for your needs, example: add a banner image in the body section, below the header:
 * Example:  \<img src="http://numismatics.org/themes/ocre/images/banner.jpg" style="width:100%" /\>
 * Or on the server: cp \<mysource\>/banner.jpg /usr/local/projects/\<my_instance_name\>/ui/images/ and add to the above mentioned index.xsl:
-* Example:  \<img src="/themes/alpen/images/banner.jpg" style="width:100%" /\>
+* Example:  \<img src="{$include_path}/images/project/banner.jpg" style="width:100%" /\>
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 * ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
 
