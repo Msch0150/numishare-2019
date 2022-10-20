@@ -33,7 +33,7 @@ services:
       #- data:/var/solr
       - "../solr-home/1.6:/var/solr/data/numishare"
       - "./core.properties:/var/solr/data/numishare/core.properties"
-      - ../../../data/docker-solr-data:/var/solr/data/numishare/data
+      - ../../../../data/docker-solr-data:/var/solr/data/numishare/data
     command:
       - solr-precreate
       - numishare
@@ -46,20 +46,20 @@ services:
     volumes:
       - "..:/usr/local/projects/numishare"
       - "./jetty.xml:/exist/etc/jetty/jetty.xml"
-      - ../../../data/docker-exist-data:/exist/data
+      - ../../../../data/docker-exist-data:/exist/data
   iiif:
     image: lorisimageserver/loris
     container_name: numishare_iiif
     #build: ./loris
     volumes:
-      - ../../../data/docker-loris-data/images:/opt/loris/tests/img
+      - ../../../../data/docker-loris-data/images:/opt/loris/tests/img
     ports:
       - "10206:5004"
   fuseki:
     image: stain/jena-fuseki
     container_name: fuseki
     volumes:
-      - ../../../data/docker-fuseki-data:/fuseki
+      - ../../../../data/docker-fuseki-data:/fuseki
     ports:
       - "10208:3030"
 volumes:
