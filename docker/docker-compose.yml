@@ -68,4 +68,3 @@ services:
       - "./admin.xhtml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/xforms/admin.xhtml"
       - "..:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare"
       - "../..:/usr/local/projects"
-
