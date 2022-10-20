@@ -48,6 +48,8 @@ done
 
 cd "${DATA_DIR}/docker-numishare-data/numishare/docker"
 
+echo "Use $(pwd) for docker startup and shutdown"
+
 # docker compose up
 
 # Using the current docker-compose.xml you might want to try:
