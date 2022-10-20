@@ -2,7 +2,7 @@
 
 # Variables
 # At least numishare is required in the list below
-MAIN="numishare"
+MAIN="../numishare"
 COLLECTIONS="alpen srm koeln rct scheers megen"
 DATA_DIR=${HOME}/data
 
@@ -31,10 +31,10 @@ sudo chown 8983:8983 numishare-master/docker/core.properties && \
 cd numishare-master && \
 sudo ln -s ui default
 
-if [ ! -d "${DATA_DIR}/docker-numishare-data/${MAIN}" ]; then
-  mkdir -p "${DATA_DIR}/docker-numishare-data/${MAIN}"
-  cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${MAIN}/"
-  cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${MAIN}/"
+if [ ! -d "${MAIN}" ]; then
+  mkdir -p "${MAIN}"
+  cp -rp $(pwd)/* "${MAIN}/"
+  cp docker/exist-config.xml "${MAIN}/"
 fi
 
 for COLLECTION in ${COLLECTIONS}; do
@@ -44,17 +44,17 @@ for COLLECTION in ${COLLECTIONS}; do
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/images/project"
     cp -p "${DATA_DIR}/docker-numishare-data/${MAIN}/ui/xslt/pages/index.xsl" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages/"
     # To integrate the collections
-    echo '      - "../ui:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
-    echo '      - "../:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
-    echo '      - "../../'${COLLECTION}'/ui/xslt/pages/index.xsl:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'/ui/xslt/pages/index.xsl"'  >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
-    echo '      - "../../'${COLLECTION}'/ui/images/project:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'/images/project"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
+    echo '      - "../ui:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'"' >> "${MAIN}/docker/docker-compose.yml"
+    echo '      - "../:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'"' >> "${MAIN}/docker/docker-compose.yml"
+    echo '      - "../../'${COLLECTION}'/ui/xslt/pages/index.xsl:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'/ui/xslt/pages/index.xsl"'  >> "${MAIN}/docker/docker-compose.yml"
+    echo '      - "../../'${COLLECTION}'/ui/images/project:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'/images/project"' >> "${MAIN}/docker/docker-compose.yml"
     # to avoid data access via admin
-    echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
-    echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
+    echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${MAIN}/docker/httpd.conf"
+    echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${MAIN}/docker/httpd.conf"
   fi
 done
 
-cd "${DATA_DIR}/docker-numishare-data/numishare/docker"
+cd "${MAIN}/docker"
 
 echo "Use $(pwd) for docker startup and shutdown"
 
