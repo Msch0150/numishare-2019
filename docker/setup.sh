@@ -42,7 +42,7 @@ for COLLECTION in ${COLLECTIONS}; do
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages"
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/images/project"
-    cp -p "${DATA_DIR}/docker-numishare-data/${MAIN}/ui/xslt/pages/index.xsl" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages/"
+    cp -p "${MAIN}/ui/xslt/pages/index.xsl" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages/"
     # To integrate the collections
     echo '      - "../ui:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'"' >> "${MAIN}/docker/docker-compose.yml"
     echo '      - "../:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'"' >> "${MAIN}/docker/docker-compose.yml"
