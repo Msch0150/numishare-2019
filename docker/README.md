@@ -58,7 +58,7 @@
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
 * cd /usr/local/projects/
 * ln -s /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare numishare
-* # vi /usr/local/projects/\<my_collection_name\>/page-flow.xml
+* \# vi /usr/local/projects/\<my_collection_name\>/page-flow.xml
 * vi /usr/local/projects/numishare/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
 * \<!-- <my_instance_name> --\>
