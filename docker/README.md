@@ -21,6 +21,7 @@
 *  mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 *  cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 *  ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
+*  Optional for any collections to use the default: ln -s /usr/local/projects/numishare-master/default default
 *  If setup as coint-type:
 *  Change in admin interface, Modify Settings, General settings > Collection Type > Type series: http://nomisma.org/id/pella_type_series (doesn't really matter in this step, but there needs to be entered something. It will have an influence on the listed contributors. So all institutions contributing to pella (ANS, {BnF, NNC, ...). > Save
 *  For local access: Change in admin interface > Modify Settings > Themes and layout: http://localhost:10200/orbeon/themes
