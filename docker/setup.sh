@@ -35,6 +35,9 @@ for COLLECTION in ${COLLECTIONS}; do
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
     cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
     cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
+    # to avoid data access via admin
+    echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> docker/httpd.conf
+    echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> docker/httpd.conf
   fi
 done
 
