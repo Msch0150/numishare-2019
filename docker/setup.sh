@@ -40,7 +40,7 @@ done
 
 cd "${DATA_DIR}/docker-numishare-data/numishare/docker"
 
-docker compose up
+# docker compose up
 
 # Using the current docker-compose.xml you might want to try:
 #
