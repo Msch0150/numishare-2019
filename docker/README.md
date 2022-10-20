@@ -46,15 +46,15 @@
 ## Post Installation Tasks for multiple instances 
 
 * docker exec -ti orbeon bash
-* mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
-* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
 * !!! Might a link be enogh for the following?
-* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/\<my_instance_name\>
 * !!! Try: cd /usr/local/projects && ln -s /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare numishare
 * !!! Try: required directories for instances: /usr/local/projects/\<my_instance_name\>/ui/images/
 * !!! Try: required directories for instances: /usr/local/projects/\<my_instance_name\>/ui/css/
 * !!! Try: required file /usr/local/projects/\<my_collection_name\>/ui/xslt/pages/index.xsl (/numishare-projects/\<my_instance_name\>/xpl/views/pages/index.xpl)
 * !!! /numishare-projects/mymint/xpl/views/pages/index.xpl
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/\<my_instance_name\>
+* mkdir /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
+* cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/**numishare-projects**
 * ln -s /usr/local/projects/<my_collection_name> <my_collection_name>
 * cd /usr/local/projects/
 * ln -s /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare numishare
