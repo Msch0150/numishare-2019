@@ -47,7 +47,7 @@ for COLLECTION in ${COLLECTIONS}; do
     echo '      - "../ui:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
     echo '      - "../:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
     echo '      - "../../'${COLLECTION}'/ui/xslt/pages/index.xsl:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/numishare-projects/'${COLLECTION}'/ui/xslt/pages/index.xsl"'  >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
-    echo '      - "../../'${COLLECTION}'/ui/images/project:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'/images/project" >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
+    echo '      - "../../'${COLLECTION}'/ui/images/project:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes/'${COLLECTION}'/images/project"' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/docker-compose.yml"
     # to avoid data access via admin
     echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
     echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
