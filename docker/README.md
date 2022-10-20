@@ -23,7 +23,8 @@
 *  ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
 *  If setup as coint-type:
 *  Change in admin interface, Modify Settings, General settings > Collection Type > Type series: http://nomisma.org/id/pella_type_series (doesn't really matter in this step, but there needs to be entered something. It will have an influence on the listed contributors. So all institutions contributing to pella (ANS, {BnF, NNC, ...). > Save
-*  Change in admin interface > Modify Settings > Themes and layout http://localhost:10200/orbeon/themes
+*  For local access: Change in admin interface > Modify Settings > Themes and layout http://localhost:10200/orbeon/themes
+*  For public access via Apache Web Sever:  Change in admin interface > Modify Settings > Themes and layout http://<external url>/themes
 *  Theme Folder: <my_instance_name>
 
 ## Testing IIIF
