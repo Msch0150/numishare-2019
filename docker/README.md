@@ -8,7 +8,7 @@
 * Open terminal
 * Copy and Paste content of setup.sh in terminal
 
-## Post install tasks
+## Post install tasks (single instance)
 * docker exec -ti orbeon bash
 * \# Try: mkdir /usr/local/projects/\<my_instance_name\>
 * \# Try: cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/ui /usr/local/projects/\<my_instance_name\>
