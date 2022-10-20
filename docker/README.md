@@ -10,9 +10,9 @@
 
 ## Post install tasks
 * docker exec -ti orbeon bash
-* # Try: mkdir /usr/local/projects/<my_instance_name>
-* # Try: cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/ui /usr/local/projects/<my_instance_name>
-* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/<my_instance_name>
+* # Try: mkdir /usr/local/projects/\<my_instance_name\>
+* # Try: cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/ui /usr/local/projects/\<my_instance_name\>
+* cp -rp /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare /usr/local/projects/\<my_instance_name\>
 * Access admin interface > http://localhost:10200/orbeon/numishare/admin/
 * Add new collection:
 *  Tomcat Role: <my_instance_name>
