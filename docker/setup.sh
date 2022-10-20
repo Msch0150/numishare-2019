@@ -2,7 +2,8 @@
 
 # Variables
 # At least numishare is required in the list below
-COLLECTIONS="numishare alpen srm koeln rct"
+MAIN="numishare"
+COLLECTIONS="alpen srm koeln rct"
 DATA_DIR=${HOME}/data
 
 
@@ -30,14 +31,18 @@ sudo chown 8983:8983 numishare-master/docker/core.properties && \
 cd numishare-master && \
 sudo ln -s ui default
 
+if [ ! -d "${DATA_DIR}/docker-numishare-data/${MAIN}" ]; then
+  mkdir -p "${DATA_DIR}/docker-numishare-data/${MAIN}"
+  cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${MAIN}/"
+  cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${MAIN}/"
+fi
+
 for COLLECTION in ${COLLECTIONS}; do
   if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
-    cp -rp $(pwd)/* "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
-    cp docker/exist-config.xml "${DATA_DIR}/docker-numishare-data/${COLLECTION}/"
     # to avoid data access via admin
-    echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> docker/httpd.conf
-    echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> docker/httpd.conf
+    echo 'ProxyPass /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
+    echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${DATA_DIR}/docker-numishare-data/${MAIN}/docker/httpd.conf"
   fi
 done
 
