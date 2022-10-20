@@ -1,4 +1,9 @@
 version: "3.3"
+volumes:
+  data:
+    driver: local
+  config:
+    driver: local
 services:
   httpd:
     container_name: apache
@@ -7,23 +12,6 @@ services:
       - "80:80"
     volumes:
       - "./httpd.conf:/usr/local/apache2/conf/httpd.conf"
-  orbeon:
-    container_name: orbeon
-    image: numishare:vu
-    build: ./orbeon
-    ports:
-      - "10200:8080"
-    environment:
-      JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties'
-    volumes:
-      - "./orbeon.xml:/usr/local/tomcat/conf/Catalina/localhost/orbeon.xml"
-      - "../..:/usr/local/projects"
-      - "..:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare"
-      - "./exist-config.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/exist-config.xml"
-      - "./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml"
-      - "./web.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/web.xml"
-      - "./properties-local.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/config/properties-local.xml"
-      - "./admin.xhtml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/xforms/admin.xhtml"
   solr:
     container_name: solr
     image: solr:8.6.2
@@ -63,8 +51,21 @@ services:
       - ../../../../data/docker-fuseki-data:/fuseki
     ports:
       - "10208:3030"
-volumes:
-  data:
-    driver: local
-  config:
-    driver: local
+  orbeon:
+    container_name: orbeon
+    image: numishare:vu
+    build: ./orbeon
+    ports:
+      - "10200:8080"
+    environment:
+      JAVA_OPTS: '-server -Djava.awt.headless=true -Xms1G -Xmx1G -XX:NewSize=896m -XX:MaxNewSize=896m -Dlog4j.configuration=/usr/local/tomcat/lib/log4j.properties'
+    volumes:
+      - "./orbeon.xml:/usr/local/tomcat/conf/Catalina/localhost/orbeon.xml"
+      - "./exist-config.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/exist-config.xml"
+      - "./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml"
+      - "./web.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/web.xml"
+      - "./properties-local.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/config/properties-local.xml"
+      - "./admin.xhtml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/xforms/admin.xhtml"
+      - "..:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare"
+      - "../..:/usr/local/projects"
+
