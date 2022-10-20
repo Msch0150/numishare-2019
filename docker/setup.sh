@@ -54,8 +54,8 @@ for COLLECTION in ${COLLECTIONS}; do
   echo 'ProxyPassReverse /'${COLLECTION}'/ http://orbeon:8080/orbeon/numishare/'${COLLECTION}'/' >> "${MAIN}/docker/httpd.conf"
 done
 
-if [ -f "${DATA_DIR}/page-flow.xml" ]; then
-    echo '      - "'${DATA_DIR}/docker-numishare-data'/page-flow.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml"' >> "${MAIN}/docker/docker-compose.yml"
+if [ -f "${DATA_DIR}/docker-numishare-data/page-flow.xml" ]; then
+    echo '      - "'${DATA_DIR}'/docker-numishare-data/page-flow.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml"' >> "${MAIN}/docker/docker-compose.yml"
 fi
 
 cd "${MAIN}/docker"
