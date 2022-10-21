@@ -34,3 +34,12 @@ Startup directory is `numishare/numishare/docker/`. You should be already in thi
     
     docker compose up
     
+If you want to adjust the banner image you can copy `page-flow.xml` to a directory outside of the code:
+
+    cp numishare/numishare/page-flow.xml data/docker-numishare-data/page-flow.xml
+    
+Make your modifications and add append to the `volumes:` of `orbeon:` section in the file `numishare/numishare/docker/docker-compose.yml`:
+
+     - "../../../data/docker-numishare-data/page-flow.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml"
+     
+Info: The next installation will detect he outside laying file and append the location automatically.
