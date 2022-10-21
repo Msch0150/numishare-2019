@@ -43,3 +43,7 @@ Make your modifications and add append to the `volumes:` of `orbeon:` section in
      - "../../../data/docker-numishare-data/page-flow.xml:/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml"
      
 Info: The next installation will detect he outside laying file and append the location automatically.
+
+# Customization for instances
+
+To remove the standard information about Numishare on the title page edit the `config.xml` in the Exist-DB and remove the paragraph in the pages section. 
