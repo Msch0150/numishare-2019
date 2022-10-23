@@ -44,6 +44,18 @@ Make your modifications and add append to the `volumes:` of `orbeon:` section in
      
 Info: The next installation will detect he outside laying file and append the location automatically.
 
+
+# IIIF Setup
+
+    cd data/docker-loris-data/
+    mkdir -p images/media/<my_collection_name>/jpg
+    copy <my_collection_name>.<my_image_id>.jpg images/media/<my_collection_name>/jpg/
+
+Test internally via `http://localhost:10206/media/<my_collection_name>/jpg/my_collection_name>.<my_image_id>.jpg/full/175,/0/default.jpg`
+Example:
+    http://localhost:10206/media/srm/jpg/srm.20081212-010.1.jpg/full/175,/0/default.jpg
+Test externally via `http://external_url/media/<my_collection_name>/jpg/my_collection_name>.<my_image_id>.jpg/full/175,/0/default.jpg`
+
 # Customization for instances
 
 To remove the standard information about Numishare on the title page edit the `config.xml` in the Exist-DB and remove the paragraph in the pages section. 
