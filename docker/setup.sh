@@ -3,7 +3,7 @@
 # Variables
 # At least numishare is required in the list below
 MAIN="../numishare"
-COLLECTIONS="alpen srm koeln rct scheers megen"
+COLLECTIONS="alpen srm koeln rct scheers megen countermarks"
 DATA_DIR=${HOME}/data
 
 
