@@ -1,0 +1,124 @@
+/*
+  ***************************************
+  ULPIA
+  ***************************************
+ */
+.body {
+    background-color: #f2f2f2;
+}
+.container {
+    width: 100%
+}
+.jumbotron {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    color: white;
+    background-color: #4c4c4c;
+}
+.jumbotron -h1, .jumbotron h1 {
+    font-size: 32px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: 0px;
+}
+.navbar {
+    margin-bottom: 0px;
+}
+.navbar-brand {
+    padding-top: 13px;
+}
+.jumbotron p {
+    font-size: 1.5rem;
+    background: #b3b3b3;
+    margin-left: -30px;
+    margin-bottom: 0px;
+    margin-right: 0px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+.col-md-9 {
+    font-size: 1.6rem;
+}
+.col-md-9 p {
+    margin: -10px 0px 20px;
+}
+#facet_form a {
+    color: black;
+}
+.col-md-12 a {
+    color: #666666;
+}
+.col-md-12 {
+    padding-right: 0px;
+    padding-left: 30px;
+}
+#footer {
+    background-color: black;
+    color: white;
+}
+#footer p {
+    margin: 0 0 0px;
+    font-size: 1.2rem;
+}
+#footer a {
+    color: white;
+    font-size: 1.2rem;
+}
+.navbar-default {
+    background-color: white;
+    margin-left: 10px;
+}
+.container-fluid {
+    padding-left: 15px;
+}
+.ulpia-01 p {
+    background: white;
+    color: black;
+}
+.side-thumbnail{
+    max-width: 120px;
+    max-height: 120px;
+}
+/* Example: text color of item name in grid view */
+a {
+    color: #666666
+}
+
+/* Example: text, background and border color of applied filter */
+.alert-info {
+    color: #ffffff;
+    background-color: #aaaaaa;
+    border-color: #aaaaaa;
+}
+
+/* Example: no rounded corners for filter buttons */
+.btn {
+    border-radius: 0px;
+}
+
+/* Example: no rounded corners for search field */
+.form-control {
+    border-radius: 0px;
+}
+
+/* Example: Results, filter text box */
+.alert {
+    border-radius: 0px;
+}
+
+/* Example: Background Canonical URI */
+code {
+    background-color: #ffffff;
+}
+
+/* Example: text color leaflet (image) */
+.leaflet-container a {
+    color: #666666;
+}
+
+/* Example: background of featured item */
+.highlight {
+    background-color: #ffffff;
+}
