@@ -2275,7 +2275,6 @@
             <xsl:when test="$lang='de'">
                 <xsl:choose>
                     <xsl:when test="$label='header_about'">Über</xsl:when>
-		    <xsl:when test="$label='header_about'">Über</xsl:when>
 		    <xsl:when test="$label='header_home'">Start</xsl:when>
                     <xsl:when test="$label='header_browse'">Browsen</xsl:when>
                     <xsl:when test="$label='header_search'">Suchen</xsl:when>
