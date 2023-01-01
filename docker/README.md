@@ -106,6 +106,7 @@
 
 If numishare is updated by unzipping in ... then the configuration of the index pages need to be reconfigred.
 
+Obsolete due to mapping to (/usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/numishare/page-flow.xml):
 * vi /usr/local/projects/numishare/page-flow.xml
 * Add to section "PUBLIC INTERFACE":
 * \<!-- <my_instance_name> --\>
