@@ -43,7 +43,8 @@ for COLLECTION in ${COLLECTIONS}; do
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages"
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/css"
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/images/project"
-    cp -p "${MAIN}/docker/ulpia.style.css" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/css/style.css"
+    cp -p "${MAIN}/ui/css/style.css" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/css/style.css"
+    cat "${MAIN}/docker/ulpia.style.css" >> "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/css/style.css"
     cp -p "${MAIN}/ui/xslt/pages/index.xsl" "${DATA_DIR}/docker-numishare-data/${COLLECTION}/ui/xslt/pages/"
   fi
   # To integrate the collections
