@@ -1,8 +1,10 @@
                     <xsl:when test="$label='about'">über</xsl:when>
                     <xsl:when test="$label='fieldOfNumismatics'">Fachgebiet</xsl:when>
-                    <xsl:when test="$label='license'">Lizenz</xsl:when>
-                    <xsl:when test="$label='otherObverseLegend'">weitere Vorderseitenlegende</xsl:when>
-                    <xsl:when test="$label='photo'">Foto</xsl:when>
                     <xsl:when test="$label='findspotDesc'">Findspot Description</xsl:when>
                     <xsl:when test="$label='header_about'">Über</xsl:when>
                     <xsl:when test="$label='header_contributors'">Beitragende</xsl:when>
+                    <xsl:when test="$label='license'">Lizenz</xsl:when>
+                    <xsl:when test="$label='literature'">Literatur</xsl:when>
+                    <xsl:when test="$label='otherObverseLegend'">weitere Vorderseitenlegende</xsl:when>
+                    <xsl:when test="$label='otherReverseLegend'">weitere Rückseitenlegende</xsl:when>
+                    <xsl:when test="$label='photo'">Foto</xsl:when>
