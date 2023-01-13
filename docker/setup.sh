@@ -37,6 +37,11 @@ if [ ! -d "${MAIN}" ]; then
   cp docker/exist-config.xml "${MAIN}/"
 fi
 
+# Adjust german translations ("dirty" workaround and local changes until changes are done in master branch)
+sed "/Übergeordneter Typ/q" ui/xslt/functions.xsl > "${MAIN}/ui/xslt/functions.xsl"
+cat docker/functions.addendum.de >> "${MAIN}/ui/xslt/functions.xsl"
+sed -n -e "/Übergeordneter Typ/,$ p" ui/xslt/functions.xsl >> "${MAIN}/ui/xslt/functions.xsl"
+
 for COLLECTION in ${COLLECTIONS}; do
   if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
     mkdir -p "${DATA_DIR}/docker-numishare-data/${COLLECTION}"
