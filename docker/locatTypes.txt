@@ -1,0 +1,14 @@
+    <localTypes>
+        <localType value="photo">
+					<label lang="de">Foto</label>
+				</localType>
+        <localType value="link">
+					<label lang="de">Verweis</label>
+				</localType>
+        <localType value="literature">
+					<label lang="de">Literatur</label>
+				</localType>
+        <localType value="fieldOfNumismatics">
+					<label lang="de">Fachgebiet</label>
+				</localType>
+    </localTypes>
