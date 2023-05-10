@@ -102,6 +102,17 @@
 * cd /usr/local/tomcat/webapps/orbeon/WEB-INF/resources/apps/themes
 * ln -s /usr/local/projects/<my_instance_name>/ui <my_instance_name>
 
+## Update
+
+cd numishare/numishare/docker
+docker compose down
+cd
+mv numishare numishare.<save_date>
+# !!!!
+# Copy and Paste content of setup.sh in terminal
+# !!!!
+docker compose up
+
 ## Post Numishare update tasks
 
 If numishare is updated by unzipping in ... then the configuration of the index pages need to be reconfigred.
