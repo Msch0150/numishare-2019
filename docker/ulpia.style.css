@@ -73,6 +73,7 @@
 }
 .container-fluid {
     padding-left: 15px;
+    word-wrap: break-word;
 }
 .ulpia-01 p {
     background: white;
