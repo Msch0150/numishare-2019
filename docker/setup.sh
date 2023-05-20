@@ -3,7 +3,7 @@
 # Variables
 # At least numishare is required in the list below
 MAIN="../numishare"
-COLLECTIONS="alpen auctions cf cfa cfm cohen countermarks dinslaken dlt dt gdbz hmfamm koeln literature lvr-lmb megen nnc_dnb private_collections rct rgmk scheers srm stmsm uva"
+COLLECTIONS="alpen auctions cf cfa cfm ch cohen countermarks dinslaken dlt dt gdbz hmfamm koeln literature lvr-lmb megen moers nnc_dnb private_collections rct rgmk scheers srm stmsm uva"
 DATA_DIR=${HOME}/data
 
 
