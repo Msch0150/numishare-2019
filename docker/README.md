@@ -104,6 +104,7 @@
 
 ## Update
 
+```
 cd numishare/numishare/docker
 docker compose down
 cd
@@ -112,6 +113,7 @@ mv numishare numishare.<save_date>
 # Copy and Paste content of setup.sh in terminal
 # !!!!
 docker compose up
+```
 
 ## Post Numishare update tasks
 
