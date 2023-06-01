@@ -44,6 +44,7 @@ sed -n -e "/Übergeordneter Typ/,$ p" ui/xslt/functions.xsl >> "${MAIN}/ui/xslt/
 
 # Adjust ordering base on the availability of an image, here obvThumb. First the item with obvThumb then without obvThumb.
 sed "s/ASC(?publisher) ASC(?datasetTitle)/DESC(?obvThumb) ASC(?publisher) ASC(?datasetTitle)/g" ui/sparql/type-examples.sparql > "${MAIN}/ui/sparql/type-examples.sparql
+sed "s/ASC(?publisher) ASC(?datasetTitle)/DESC(?obvThumb) ASC(?publisher) ASC(?datasetTitle)/g" ui/sparql/hoard-examples.sparql > "${MAIN}/ui/sparql/hoard-examples.sparql
 
 for COLLECTION in ${COLLECTIONS}; do
   if [ ! -d "${DATA_DIR}/docker-numishare-data/${COLLECTION}" ]; then
